@@ -1,0 +1,95 @@
+chilea bro q esto es pa probar
+
+-1 Cimientos (El "Esqueleto")
+[ ] Configurar proyecto en el motor (Unity) y Git (¡Usa control de versiones!).
+
+[ ] Script de movimiento 2D (WASD) y rotación hacia el ratón.
+
+[ ] Estados: Estado NORMAL vs Estado PESADILLA.
+
+-2 vision
+[ ] Configurar la cámara con el Deadzone (Cinemachine).
+
+[ ] Crear el sistema de iluminación 2D. El cono de luz debe "cortarse" con las paredes (Raycasting/Shadow Casters).
+
+[ ] Programar el "interruptor": Al pulsar una tecla, la cámara hace zoom, la luz cambia y la velocidad baja.
+
+-3 La Lógica (Las 3 Habitaciones)
+[ ] Diseñar el layout de las 3 salas visdualmente simplificado (solo cubos).
+
+[ ] Diseñar enemigos y herramientas/armas de cada habitacios, x2 IA x1 Enemigo ambiental + puzzles.
+
+[ ] Sistema de interacción básico: Abrir puertas, recoger un "cubo-ítem", disparar con retroceso.
+
+[ ] Programar el "Backtracking condicional": Puerta cerrada en Pesadilla -> Ítem visible solo en Luz -> Abrir en Pesadilla.
+
+-4 El Mal Rollo (IA y Audio)
+[ ] Implementar IAs y enemigo ambiental.
+
+[ ] Crucial: Implementar el audio. Pasos, zumbidos, el sonido del interruptor.
+
+[ ] Pulido de transiciones (fundidos a negro, pequeñas sacudidas de cámara).
+
+-5 Test y pulido
+
+-6 Chapa y pintura
+
+[ ] probar conceptos (visuales) con IA
+
+[ ] reemplazar conceptos con yo q pollas se. aquí ya no llego colega.
+
+
+------------------IDEAS--------------------------
+1. El Núcleo de la Experiencia (Core Loop)
+La Premisa: Un niño asustado que debe cruzar la casa para despertar a sus padres. La oscuridad se mezcla con las pesadillas y la paranoia.
+
+Dualidad de Estados: El mapa tiene dos versiones:
+
+Luz Encendida: Mundo real, seguro, vista amplia, movimiento rápido. Sirve para reconocimiento y recolección rápida de objetos.
+
+Luz Apagada: Pesadilla/Sueño, distorsionado, vista claustrofóbica, movimiento lento, presencia de amenazas. Es donde ocurre el progreso real.
+
+Checkpoint: Encender la luz de una habitación la "limpia" y marca el punto de guardado.
+
+Linterna que puedes recargar en los enchufes con pilas muy limitadas para mecánicas clave (enemigos y algo mas)
+
+2. Jugabilidad y Mecánicas
+Transición: Animación de "dormir/despertar" al interactuar con interruptores, cambiando el entorno y el FOV.
+Backtracking Condicional:Objetos necesarios para avanzar en la pesadilla que solo son accesibles o visibles tras haber explorado la versión iluminada (o viceversa).Sub-habitaciones que solo existen en la dimensión de la pesadilla.
+Objetos/Armas: Juguetes en el mundo real que se transforman en herramientas o armas funcionales en la pesadilla (ej. palo de plástico -> espada).
+
+
+3. Cámara y Control (El "Feeling")
+Perspectiva: Zenital (Top-down).
+
+Campo de Visión (FOV): Sistema tipo Darkwood. Cono de visión frontal; lo que no miras o está detrás de paredes es negro total.
+
+Con luz encendida: cámara con visión completa de la habitacion
+
+Cámara con Deadzone: Un radio central donde el niño se mueve sin que la cámara lo siga, hasta que llega al borde y la cámara empieza a desplazarse.
+
+Velocidad Variable: El personaje es más ágil con la luz encendida y más torpe/lento en la oscuridad.
+
+
+
+4. Enemigos y Peligros
+Amenazas Ambientales: Trampas u obstáculos que reaccionan al jugador (p.e. manos que salen de muebles).
+
+IA de Enemigos: Entidades que patrullan o persiguen. Intención (no hay barra de vida) mecánicas especiales para librarte de ellas.
+
+Amenazas distintas por habitación
+
+
+5. Estética y Sonido
+Arte: Estilo recargado y malrollero, feo y q causea rechazo. Poco explicito, la mente rellena los huecos. Uso de sombras para ocultar la falta de dibujo.
+
+Audio Opresivo: Crujidos, sonidos de baja frecuencia y efectos de sonido para generar ansiedad (pasos, puertas, etc).
+
+Menu muuuy simple
+
+Pov estáticos al abrir armarios o interactuar con objetos? esto definitivamente no será lo primero q haga
+
+---------ENEMIGOS----------
+-CUCAS siguen el sonido. escopeta aleja pero no mata
+-Cuarto vivo con ojos que puedes deslumbrar para mmoverte. si t ven moviendote te revientan. a lo largo de la habitación hay varios ojos, Oslo puede estar uno abierto a la vez. Para que no ataque lo tienes q deslumbrar cuando este abierto, pero si se cierra, significa q se abrirá otro y por el sonido debes ver cual ha sido y deslumbrarlo antes de moverte.
+-enemigo que te persigue (tipo tyrant). puedes deshacerte de el de diferentes formas pero va a ir volviendo a lo largo del juego.
