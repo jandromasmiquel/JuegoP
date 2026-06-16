@@ -1,31 +1,31 @@
 using UnityEngine;
 
 public class MovimientoPlayer : MonoBehaviour
-{public float speed = 5f;
+{
+    public float speed = 5f;
     private Rigidbody2D rb;
-    private Vector2 movement;
 
     void Start() {
         rb = GetComponent<Rigidbody2D>();
-        // Importante: No bloquees la rotación en el Rigidbody si quieres que rote el cuerpo
-        rb.freezeRotation = true; 
+        // IMPORTANTE: NO marques "Freeze Rotation Z" en el Inspector si quieres que rote
+        rb.freezeRotation = false; 
     }
 
     void Update() {
-        // 1. Movimiento (Sigue usando esto)
+        // 1. Movimiento (usamos transform para mover, o MovePosition)
         float moveX = Input.GetAxisRaw("Horizontal");
         float moveY = Input.GetAxisRaw("Vertical");
-        transform.position += new Vector3(moveX, moveY, 0) * speed * Time.deltaTime;
-
-        // 2. Rotación directa (Ignorando la física)
-        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        Vector2 lookDir = (Vector2)mousePos - (Vector2)transform.position;
-        float angle = Mathf.Atan2(lookDir.y, lookDir.x) * Mathf.Rad2Deg - 90f;
-        transform.rotation = Quaternion.Euler(0, 0, angle);
+        Vector2 movement = new Vector2(moveX, moveY).normalized;
+        rb.linearVelocity = movement * speed;
     }
 
     void FixedUpdate() {
-        // 3. Aplicar movimiento
-        rb.MovePosition(rb.position + movement.normalized * speed * Time.fixedDeltaTime);
+        // 2. Rotación hacia el ratón (usando física)
+        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        Vector2 lookDir = (Vector2)mousePos - rb.position;
+        float angle = Mathf.Atan2(lookDir.y, lookDir.x) * Mathf.Rad2Deg - 90f;
+        
+        // MoveRotation hace que el hitbox rote suavemente con la física
+        rb.MoveRotation(Quaternion.Euler(0, 0, angle));
     }
 }
