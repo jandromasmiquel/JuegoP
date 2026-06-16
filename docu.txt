@@ -8,11 +8,14 @@ chilea bro q esto es pa probar
 [ ] Estados: Estado NORMAL vs Estado PESADILLA.
 
 -2 vision
-[ ] Configurar la cámara con el Deadzone (Cinemachine).
 
 [ ] Crear el sistema de iluminación 2D. El cono de luz debe "cortarse" con las paredes (Raycasting/Shadow Casters).
 
-[ ] Programar el "interruptor": Al pulsar una tecla, la cámara hace zoom, la luz cambia y la velocidad baja.
+[ ] Programar el "interruptor": Al pulsar una tecla, la cámara hace zoom, la luz y la velocidad cambian.
+
+[ ] Configurar la cámara con el Deadzone (Cinemachine).
+
+[ ] La camara zenital no cubre toda la escena . la camara tiene un pequeño deadzone (cambia segun el modo de la luz igual q el fov) en el centro en el que se puede mover el personaje sin que le siga pero al llegar al limite de este la camara lo sigue
 
 -3 La Lógica (Las 3 Habitaciones)
 [ ] Diseñar el layout de las 3 salas visdualmente simplificado (solo cubos).
