@@ -12,7 +12,7 @@ TagManager:
   - Water
   - UI
   - Interactable
-  - 
+  - VisionBlocker
   - 
   - 
   - 
@@ -49,6 +49,9 @@ TagManager:
     locked: 0
   - name: Jugador
     uniqueID: 1126747223
+    locked: 0
+  - name: Paredes
+    uniqueID: 1889192227
     locked: 0
   m_RenderingLayers:
   - Default
