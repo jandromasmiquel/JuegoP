@@ -5,7 +5,7 @@ public class FieldOfView : MonoBehaviour
 {
     [SerializeField] private float fov = 90f;
     [SerializeField] private float viewDistance = 15f;
-    [SerializeField] private int rayCount = 80;
+    [SerializeField] private int rayCount = 500;
     [SerializeField] private LayerMask layerMask;
 
     private Mesh mesh;
