@@ -1,32 +1,61 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class MouseInteractor : MonoBehaviour
 {
-    public float maxDistance = 2f;
-    public LayerMask interactableLayer;
+    [SerializeField] private float maxDistance = 2f;
+    [SerializeField] private LayerMask interactableLayer;
 
-    void Update()
+    private Camera mainCamera;
+    private InputAction clickAction;
+
+    private void Awake()
     {
-        if (Input.GetMouseButtonDown(0)) // Clic izquierdo
+        mainCamera = Camera.main;
+        clickAction = new InputAction("Click", InputActionType.Button, "<Mouse>/leftButton");
+        clickAction.performed += OnClick;
+    }
+
+    private void OnEnable()
+    {
+        clickAction.Enable();
+    }
+
+    private void OnDisable()
+    {
+        clickAction.Disable();
+    }
+
+    private void OnDestroy()
+    {
+        clickAction.performed -= OnClick;
+        clickAction.Dispose();
+    }
+
+    private void OnClick(InputAction.CallbackContext context)
+    {
+        if (Mouse.current == null || mainCamera == null)
         {
-            Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            
-            // 1. ¿El objeto clicado está en la capa interactuable?
-            RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero, 0f, interactableLayer);
-            
-            if (hit.collider != null)
-            {
-                // 2. Comprobar distancia
-                float distance = Vector2.Distance(transform.position, hit.collider.transform.position);
-                if (distance <= maxDistance)
-                {
-                    var interactable = hit.collider.GetComponent<IInteractable>();
-                    interactable?.Interact();
-                }
-                else {
-                    Debug.Log("Muy lejos para interactuar");
-                }
-            }
+            return;
         }
+
+        Vector2 mousePosition = Mouse.current.position.ReadValue();
+        Vector2 worldMousePosition = mainCamera.ScreenToWorldPoint(mousePosition);
+        RaycastHit2D hit = Physics2D.Raycast(worldMousePosition, Vector2.zero, 0f, interactableLayer);
+
+        if (hit.collider == null)
+        {
+            return;
+        }
+
+        float distance = Vector2.Distance(transform.position, hit.collider.transform.position);
+        if (distance > maxDistance)
+        {
+            Debug.Log("Muy lejos para interactuar");
+            return;
+        }
+
+        IInteractable interactable = hit.collider.GetComponent<IInteractable>();
+        interactable?.Interact();
     }
 }
