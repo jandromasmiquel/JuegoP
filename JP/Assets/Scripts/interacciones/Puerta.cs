@@ -102,34 +102,37 @@ public class Puerta : MonoBehaviour, IInteractable
             Debug.Log("[Puerta] La puerta está cerrada y no puedes cruzar ahora mismo.");
             return;
         }
-
         // Almacenamos temporalmente en variables locales antes de que se actualice el estado sincrónicamente
         RoomStateManager destinationRoom = targetRoomForTeleport;
         Transform spawnPoint = targetSpawnPoint;
         string destinationName = destinationRoom.gameObject.name;
-
+        
         // Teletransportar al jugador al punto de spawn correspondiente buscando el tracker en la escena
         PlayerRoomTracker tracker = FindAnyObjectByType<PlayerRoomTracker>();
         if (tracker != null)
         {
             GameObject player = tracker.gameObject;
             
-            // Desactivamos la velocidad del Rigidbody2D temporalmente para evitar inercias
-            Rigidbody2D rb = player.GetComponent<Rigidbody2D>();
-            if (rb != null)
+            // Hacemos un fundido a negro para la transición de cruzar al mundo pesadilla
+            ScreenFader.Instance.DoTransition(Color.black, 0.5f, 0.2f, 0.5f, () =>
             {
-                rb.linearVelocity = Vector2.zero;
-                rb.position = spawnPoint.position;
-            }
-            player.transform.position = spawnPoint.position;
+                // Desactivamos la velocidad del Rigidbody2D temporalmente para evitar inercias
+                Rigidbody2D rb = player.GetComponent<Rigidbody2D>();
+                if (rb != null)
+                {
+                    rb.linearVelocity = Vector2.zero;
+                    rb.position = spawnPoint.position;
+                }
+                player.transform.position = spawnPoint.position;
 
-            // Aseguramos que la habitación de destino se ponga en modo Pesadilla y se ejecute su lógica
-            destinationRoom.SetState(RoomState.Nightmare);
+                // Aseguramos que la habitación de destino se ponga en modo Pesadilla y se ejecute su lógica
+                destinationRoom.SetState(RoomState.Nightmare);
 
-            // Actualizamos la habitación actual del jugador inmediatamente en su tracker
-            tracker.SetCurrentRoom(destinationRoom);
+                // Actualizamos la habitación actual del jugador inmediatamente en su tracker
+                tracker.SetCurrentRoom(destinationRoom);
 
-            Debug.Log($"[Puerta] Jugador cruzó a {destinationName} en modo pesadilla.");
+                Debug.Log($"[Puerta] Jugador cruzó a {destinationName} en modo pesadilla.");
+            });
         }
         else
         {

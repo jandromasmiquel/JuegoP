@@ -22,6 +22,14 @@ public class Interruptor : MonoBehaviour, IInteractable
 
     public void Interact()
     {
+        // Solo permitir interactuar (sea reparar o encender) si el jugador está dentro de la misma habitación
+        PlayerRoomTracker tracker = FindAnyObjectByType<PlayerRoomTracker>();
+        if (tracker == null || tracker.CurrentRoom != roomStateManager)
+        {
+            Debug.Log("[Interruptor] No puedes usar el interruptor desde fuera de la habitación.");
+            return;
+        }
+
         if (!estaReparado)
         {
             TryRepair();
@@ -34,7 +42,13 @@ public class Interruptor : MonoBehaviour, IInteractable
             return;
         }
 
-        roomStateManager.ToggleWorld();
+        // Fundido a blanco si pasaremos a Normal, fundido a negro si pasaremos a Pesadilla
+        Color fadeColor = roomStateManager.IsNightmare ? Color.white : Color.black;
+
+        ScreenFader.Instance.DoTransition(fadeColor, 0.4f, 0.1f, 0.4f, () =>
+        {
+            roomStateManager.ToggleWorld();
+        });
     }
 
     private void TryRepair()
