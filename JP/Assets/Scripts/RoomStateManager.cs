@@ -11,6 +11,7 @@ public enum RoomState
 public class RoomStateManager : MonoBehaviour
 {
     [Header("Room Groups")]
+    [SerializeField] private GameObject entireRoomGroup;
     [SerializeField] private GameObject normalGroup;
     [SerializeField] private GameObject nightmareGroup;
 
@@ -39,6 +40,14 @@ public class RoomStateManager : MonoBehaviour
         SetState(IsNightmare ? RoomState.Normal : RoomState.Nightmare);
     }
 
+    private bool isRoomVisible = true;
+
+    public void SetRoomVisibility(bool visible)
+    {
+        isRoomVisible = visible;
+        UpdateWorldState();
+    }
+
     public void SetState(RoomState state)
     {
         CurrentState = state;
@@ -46,8 +55,43 @@ public class RoomStateManager : MonoBehaviour
         StateChanged?.Invoke(CurrentState);
     }
 
+    public void ApplyLighting()
+    {
+        if (globalLight != null)
+        {
+            globalLight.enabled = true;
+            globalLight.intensity = IsNightmare ? intensityNightmare : intensityNormal;
+            globalLight.color = IsNightmare ? colorNightmare : colorNormal;
+        }
+    }
+
     private void UpdateWorldState()
     {
+        if (!isRoomVisible)
+        {
+            if (entireRoomGroup != null)
+            {
+                entireRoomGroup.SetActive(false);
+            }
+            else
+            {
+                if (normalGroup != null)
+                {
+                    normalGroup.SetActive(false);
+                }
+                if (nightmareGroup != null)
+                {
+                    nightmareGroup.SetActive(false);
+                }
+            }
+            return;
+        }
+
+        if (entireRoomGroup != null)
+        {
+            entireRoomGroup.SetActive(true);
+        }
+
         if (normalGroup != null)
         {
             normalGroup.SetActive(IsNormal);
@@ -56,12 +100,6 @@ public class RoomStateManager : MonoBehaviour
         if (nightmareGroup != null)
         {
             nightmareGroup.SetActive(IsNightmare);
-        }
-
-        if (globalLight != null)
-        {
-            globalLight.intensity = IsNightmare ? intensityNightmare : intensityNormal;
-            globalLight.color = IsNightmare ? colorNightmare : colorNormal;
         }
     }
 }
