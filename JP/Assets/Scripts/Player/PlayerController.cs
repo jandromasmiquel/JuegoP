@@ -11,6 +11,7 @@ public class PlayerController : MonoBehaviour
     private Camera mainCamera;
     private InputAction moveAction;
     private Vector2 moveInput;
+    private bool controlsEnabled = true;
 
     private void Awake()
     {
@@ -47,6 +48,12 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
+        if (!controlsEnabled)
+        {
+            moveInput = Vector2.zero;
+            return;
+        }
+
         moveInput = moveAction.ReadValue<Vector2>();
         RotateTowardsMouse();
     }
@@ -80,5 +87,16 @@ public class PlayerController : MonoBehaviour
         
         // Aplicamos el offset. Si tu sprite mira hacia arriba, -90f suele ser el valor correcto.
         rb.MoveRotation(angle + rotationOffset);
+    }
+
+    public void SetControlsEnabled(bool enabled)
+    {
+        controlsEnabled = enabled;
+        moveInput = Vector2.zero;
+
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+        }
     }
 }
