@@ -1,35 +1,32 @@
-using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(InventoryContainer))]
 public class PlayerInventory : MonoBehaviour
 {
-    private readonly HashSet<string> items = new HashSet<string>();
+    [SerializeField] private InventoryContainer container;
 
-    public void AddItem(string itemId)
+    public InventoryContainer Container => container;
+
+    private void Awake()
     {
-        if (string.IsNullOrWhiteSpace(itemId))
+        if (container == null)
         {
-            return;
+            container = GetComponent<InventoryContainer>();
         }
-
-        items.Add(itemId);
-        Debug.Log($"Objeto recogido: {itemId}");
     }
 
-    public bool HasItem(string itemId)
+    public bool AddItem(ItemData item, int amount = 1)
     {
-        return !string.IsNullOrWhiteSpace(itemId) && items.Contains(itemId);
+        return container != null && container.AddItem(item, amount);
     }
 
-    public bool TryUseItem(string itemId)
+    public bool HasItem(ItemData item, int amount = 1)
     {
-        if (!HasItem(itemId))
-        {
-            return false;
-        }
+        return container != null && container.HasItem(item, amount);
+    }
 
-        items.Remove(itemId);
-        Debug.Log($"Objeto usado: {itemId}");
-        return true;
+    public bool TryUseItem(ItemData item, int amount = 1)
+    {
+        return container != null && container.TryRemoveItem(item, amount);
     }
 }

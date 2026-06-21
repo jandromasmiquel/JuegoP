@@ -4,7 +4,7 @@ public class Interruptor : MonoBehaviour, IInteractable
 {
     [SerializeField] private RoomStateManager roomStateManager;
     [SerializeField] private PlayerInventory inventory;
-    [SerializeField] private string repairItemId = "interruptor_piece";
+    [SerializeField] private ItemData repairItem;
     [SerializeField] private bool estaReparado;
 
     private void Awake()
@@ -59,7 +59,13 @@ public class Interruptor : MonoBehaviour, IInteractable
             return;
         }
 
-        if (!inventory.TryUseItem(repairItemId))
+        if (repairItem == null)
+        {
+            Debug.LogWarning("Interruptor sin repairItem asignado.");
+            return;
+        }
+
+        if (!inventory.TryUseItem(repairItem))
         {
             Debug.Log("Esta roto, necesito una pieza");
             return;
