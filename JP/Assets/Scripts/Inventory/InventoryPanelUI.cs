@@ -52,6 +52,12 @@ public class InventoryPanelUI : MonoBehaviour
     {
         int requiredSlots = container != null ? container.SlotCount : 0;
 
+        if (requiredSlots > 0 && slotPrefab == null)
+        {
+            Debug.LogError($"[InventoryPanelUI] slotPrefab is not assigned on {gameObject.name}!", this);
+            return;
+        }
+
         while (slotUis.Count < requiredSlots)
         {
             InventorySlotUI slot = Instantiate(slotPrefab, slotsParent != null ? slotsParent : transform);

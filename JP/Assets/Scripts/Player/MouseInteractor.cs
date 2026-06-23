@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.EventSystems;
 
 public class MouseInteractor : MonoBehaviour
 {
@@ -13,6 +14,7 @@ public class MouseInteractor : MonoBehaviour
     private Camera mainCamera;
     private InputAction clickAction;
     private bool isHoveringInteractable;
+    private bool clickTriggered;
 
     private void Awake()
     {
@@ -41,11 +43,29 @@ public class MouseInteractor : MonoBehaviour
     private void Update()
     {
         UpdateCursorHover();
+
+        if (clickTriggered)
+        {
+            clickTriggered = false;
+            ExecuteClick();
+        }
     }
 
     private void UpdateCursorHover()
     {
         if (Mouse.current == null || mainCamera == null)
+        {
+            ResetCursor();
+            return;
+        }
+
+        if (ScreenFader.Instance != null && ScreenFader.Instance.IsFading)
+        {
+            ResetCursor();
+            return;
+        }
+
+        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
         {
             ResetCursor();
             return;
@@ -89,7 +109,22 @@ public class MouseInteractor : MonoBehaviour
 
     private void OnClick(InputAction.CallbackContext context)
     {
+        clickTriggered = true;
+    }
+
+    private void ExecuteClick()
+    {
         if (Mouse.current == null || mainCamera == null)
+        {
+            return;
+        }
+
+        if (ScreenFader.Instance != null && ScreenFader.Instance.IsFading)
+        {
+            return;
+        }
+
+        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
         {
             return;
         }

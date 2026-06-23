@@ -45,8 +45,17 @@ public class InventorySlotUI : MonoBehaviour
         }
     }
 
+        // Añade esto en InventorySlotUI.cs
+    public void SetSelected(bool isSelected)
+    {
+        // Puedes cambiar el color o poner un borde
+        GetComponent<Image>().color = isSelected ? Color.yellow : Color.white;
+    }
+
     private void OnClick()
     {
+        // Solo permitimos seleccionar si el slot NO está vacío
+        // (O si ya tienes algo seleccionado, para poder soltarlo)
         controller?.OnSlotClicked(container, slotIndex);
     }
 }

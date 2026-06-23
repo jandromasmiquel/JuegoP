@@ -22,6 +22,9 @@ public class ScreenFader : MonoBehaviour
 
     private Canvas canvas;
     private Image fadeImage;
+    private bool isFading;
+
+    public bool IsFading => isFading;
 
     private void Awake()
     {
@@ -63,6 +66,9 @@ public class ScreenFader : MonoBehaviour
         rect.pivot = new Vector2(0.5f, 0.5f);
         rect.offsetMin = Vector2.zero;
         rect.offsetMax = Vector2.zero;
+
+        // Empezar desactivado para no bloquear UI ni eventos
+        canvas.enabled = false;
     }
 
     public void DoTransition(Color fadeColor, float fadeOutDuration, float holdDuration, float fadeInDuration, Action onMidpoint)
@@ -73,6 +79,14 @@ public class ScreenFader : MonoBehaviour
 
     private IEnumerator TransitionRoutine(Color fadeColor, float fadeOutDuration, float holdDuration, float fadeInDuration, Action onMidpoint)
     {
+        isFading = true;
+
+        // Activar el canvas para la duración del fundido
+        if (canvas != null)
+        {
+            canvas.enabled = true;
+        }
+
         float elapsed = 0f;
         Color startColor = Color.clear;
 
@@ -105,5 +119,13 @@ public class ScreenFader : MonoBehaviour
             yield return null;
         }
         fadeImage.color = Color.clear;
+
+        // Desactivar el canvas al terminar la transición
+        if (canvas != null)
+        {
+            canvas.enabled = false;
+        }
+
+        isFading = false;
     }
 }
