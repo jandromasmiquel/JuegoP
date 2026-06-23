@@ -1,11 +1,13 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems; 
 
-public class InventorySlotUI : MonoBehaviour
+public class InventorySlotUI : MonoBehaviour, IPointerClickHandler
 {
     [SerializeField] private Button button;
     [SerializeField] private Image iconImage;
     [SerializeField] private Text amountText;
+    [SerializeField] private bool isHotbarSlot = false; 
 
     private InventoryContainer container;
     private InventoryUIController controller;
@@ -27,8 +29,16 @@ public class InventorySlotUI : MonoBehaviour
 
         if (button != null)
         {
-            button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(OnClick);
+            if (isHotbarSlot)
+            {
+                button.enabled = false; 
+            }
+            else
+            {
+                button.enabled = true;
+                // 🆕 Quitamos el onClick.AddListener tradicional para que no se dupliquen eventos con el clic izquierdo
+                button.onClick.RemoveAllListeners();
+            }
         }
 
         bool hasItem = slot != null && !slot.IsEmpty;
@@ -45,17 +55,16 @@ public class InventorySlotUI : MonoBehaviour
         }
     }
 
-        // Añade esto en InventorySlotUI.cs
     public void SetSelected(bool isSelected)
     {
-        // Puedes cambiar el color o poner un borde
         GetComponent<Image>().color = isSelected ? Color.yellow : Color.white;
     }
 
-    private void OnClick()
+    public void OnPointerClick(PointerEventData eventData)
     {
-        // Solo permitimos seleccionar si el slot NO está vacío
-        // (O si ya tienes algo seleccionado, para poder soltarlo)
-        controller?.OnSlotClicked(container, slotIndex);
+        if (isHotbarSlot) return; 
+
+        // Pasamos el eventData completo al controlador para que sepa qué botón se pulsó
+        controller?.OnSlotClicked(container, slotIndex, eventData);
     }
 }
