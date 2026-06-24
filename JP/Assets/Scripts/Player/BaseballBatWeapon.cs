@@ -3,33 +3,31 @@ using UnityEngine.InputSystem;
 
 public class BaseballBatWeapon : MonoBehaviour
 {
-    [SerializeField] private PlayerInventory inventory;
-    [SerializeField] private ItemData weaponItem;
+    [Header("Configuración Automática (Desde ScriptableObject)")]
+    private WeaponItemData weaponData;
+    
+    [Header("Referencias de la Escena/Prefab")]
     [SerializeField] private LayerMask damageMask;
     [SerializeField] private Transform attackOrigin;
-    [SerializeField] private float attackRadius = 0.75f;
-    [SerializeField] private int damage = 25;
-    [SerializeField] private float cooldown = 0.45f;
-    [SerializeField] private Animator animator;
-    [SerializeField] private string attackTrigger = "Attack";
-
+    
+    private Animator playerAnimator;
     private InputAction attackAction;
     private float nextAttackTime;
 
     private void Awake()
     {
-        if (inventory == null)
-        {
-            inventory = GetComponent<PlayerInventory>();
-        }
+        if (attackOrigin == null) attackOrigin = transform;
 
-        if (attackOrigin == null)
-        {
-            attackOrigin = transform;
-        }
+        // Configuramos la acción de ataque (te recomiendo cambiar a LeftButton para atacar y dejar el Right para interacciones)
+        attackAction = new InputAction("AttackAction", InputActionType.Button, "<Mouse>/leftButton");
+        attackAction.performed += _ => TryAttack();
+    }
 
-        attackAction = new InputAction("Baseball Bat Attack", InputActionType.Button, "<Mouse>/rightButton");
-        attackAction.performed += OnAttack;
+    public void Initialize(WeaponItemData data)
+    {
+        weaponData = data;
+        // Buscamos el Animator en el objeto padre (el Jugador)
+        playerAnimator = GetComponentInParent<Animator>();
     }
 
     private void OnEnable()
@@ -44,52 +42,40 @@ public class BaseballBatWeapon : MonoBehaviour
 
     private void OnDestroy()
     {
-        attackAction.performed -= OnAttack;
         attackAction.Dispose();
-    }
-
-    private void OnAttack(InputAction.CallbackContext context)
-    {
-        TryAttack();
     }
 
     public void TryAttack()
     {
-        if (Time.time < nextAttackTime)
+        // Seguridad por si no se ha inicializado
+        if (weaponData == null || Time.time < nextAttackTime) return;
+
+        nextAttackTime = Time.time + weaponData.Cooldown;
+
+        // Lanzamos la animación en el jugador
+        if (playerAnimator != null)
         {
-            return;
+            playerAnimator.SetTrigger("Attack"); // Asegúrate de que el parámetro en tu Animator se llame igual
         }
 
-        if (inventory == null || weaponItem == null || !inventory.HasItem(weaponItem))
-        {
-            Debug.Log("No tienes el bate equipado/en inventario.");
-            return;
-        }
-
-        nextAttackTime = Time.time + cooldown;
-
-        if (animator != null && !string.IsNullOrWhiteSpace(attackTrigger))
-        {
-            animator.SetTrigger(attackTrigger);
-        }
-
-        Collider2D[] hits = Physics2D.OverlapCircleAll(attackOrigin.position, attackRadius, damageMask);
+        // Calculamos los impactos usando los datos del ScriptableObject
+        Collider2D[] hits = Physics2D.OverlapCircleAll(attackOrigin.position, weaponData.AttackRadius, damageMask);
         foreach (Collider2D hit in hits)
         {
             Health health = hit.GetComponentInParent<Health>();
             if (health != null)
             {
-                health.TakeDamage(damage);
+                health.TakeDamage(weaponData.Damage);
             }
         }
 
-        Debug.Log("Golpe de bate");
+        Debug.Log($"Golpe con {weaponData.DisplayName} haciendo {weaponData.Damage} de daño.");
     }
 
     private void OnDrawGizmosSelected()
     {
-        Transform origin = attackOrigin != null ? attackOrigin : transform;
+        if (weaponData == null) return;
         Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(origin.position, attackRadius);
+        Gizmos.DrawWireSphere(attackOrigin.position, weaponData.AttackRadius);
     }
 }

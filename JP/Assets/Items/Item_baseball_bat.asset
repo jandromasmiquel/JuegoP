@@ -9,11 +9,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cbb18268316711443b7658c0f4510a20, type: 3}
-  m_Name: Item_BaseballBat
-  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  m_Script: {fileID: 11500000, guid: 64bbbf43314af3f40b24891eac22bdbe, type: 3}
+  m_Name: Item_baseball_bat
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponItemData
   itemId: bate
-  displayName: bate
+  displayName: bate de baseball
   icon: {fileID: 21300000, guid: 1453a0d353904ec49b60f494db2e72fd, type: 3}
-  stackable: 1
-  maxStack: 2
+  stackable: 0
+  maxStack: 1
+  equippedPrefab: {fileID: 0}
+  damage: 25
+  cooldown: 1
+  attackRadius: 0.75
