@@ -4,7 +4,9 @@ using UnityEngine.InputSystem;
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement")]
-    [SerializeField] private float speed = 5f;
+    [SerializeField] private float speed = 5f; // Velocidad dinámica actual
+    [SerializeField] private float normalSpeed = 5f;
+    [SerializeField] private float nightmareSpeed = 3f;
     [SerializeField] private float rotationOffset = 0f;
 
     [Header("Visuals & Animation")]
@@ -15,25 +17,26 @@ public class PlayerController : MonoBehaviour
     private Rigidbody2D rb;
     private Camera mainCamera;
     private InputAction moveAction;
-    private InputAction useItemAction; // Ahora responderá al Clic Derecho
+    private InputAction useItemAction; // Responderá al Clic Derecho
     private Vector2 moveInput;
     private bool controlsEnabled = true;
 
-    // Referencias genéricas del Sistema de Herramientas
+    // Referencias locales de Sistemas
     private InventoryUIController inventoryUI;
+    private PlayerRoomTracker roomTracker;
+    private RoomStateManager roomSuscrita;
 
     private IItemEquipable itemEquipadoVirtual;
     private ItemData itemDataActivo;
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         mainCamera = Camera.main;
         inventoryUI = FindAnyObjectByType<InventoryUIController>();
+        roomTracker = GetComponent<PlayerRoomTracker>();
 
         // BUG 1 FIX: Bloqueamos la rotación física del Rigidbody2D por completo.
-        // La rotación visual se gestiona manualmente en RotateTowardsMouse().
-        // Sin esto, colisiones durante el movimiento acumulan velocidad angular
-        // que hace girar al personaje en bucle cuando el inventario está abierto.
         if (rb != null)
         {
             rb.constraints = RigidbodyConstraints2D.FreezeRotation;
@@ -52,7 +55,6 @@ public class PlayerController : MonoBehaviour
             .With("Left", "<Keyboard>/leftArrow")
             .With("Right", "<Keyboard>/rightArrow");
 
-        // CAMBIO: Ahora el binding escucha explícitamente el CLIC DERECHO
         useItemAction = new InputAction("UseItem", InputActionType.Button, binding: "<Mouse>/rightButton");
     }
 
@@ -60,12 +62,24 @@ public class PlayerController : MonoBehaviour
     {
         moveAction.Enable();
         useItemAction.Enable();
+
+        // Nos suscribimos al tracker para saber cuándo el jugador cambia de habitación física
+        if (roomTracker != null)
+        {
+            roomTracker.RoomChanged += OnRoomChanged;
+        }
     }
 
     private void OnDisable()
     {
         moveAction.Disable();
         useItemAction.Disable();
+
+        if (roomTracker != null)
+        {
+            roomTracker.RoomChanged -= OnRoomChanged;
+        }
+        DesvincularDeSalaActual();
     }
 
     private void OnDestroy()
@@ -80,7 +94,6 @@ public class PlayerController : MonoBehaviour
         {
             moveInput = Vector2.zero;
             UpdateAnimatorsSpeed(0f);
-            // BUG 1 FIX: No rotar cuando los controles están deshabilitados (inventario abierto)
             return;
         }
 
@@ -91,14 +104,11 @@ public class PlayerController : MonoBehaviour
 
         RotateTowardsMouse();
 
-        // BUG 2 FIX: Verificar que el inventario esté cerrado antes de usar el ítem
-        // (Los hotbar slots ya tienen raycastTarget=false para no bloquear el input)
         bool inventoryOpen = inventoryUI != null && inventoryUI.IsOpen;
 
         // Ejecución de herramientas con el Clic Derecho
         if (useItemAction.WasPressedThisFrame() && torsoAnimator != null && !inventoryOpen)
         {
-            // Le decimos al ScriptableObject que se ejecute desde la posición del Torso
             if (itemEquipadoVirtual != null)
             {
                 if (itemEquipadoVirtual.EnUsar(this, torsoAnimator.transform))
@@ -113,8 +123,6 @@ public class PlayerController : MonoBehaviour
     {
         if (!controlsEnabled)
         {
-            // BUG 1 FIX: Garantizamos que la física se detiene completamente
-            // cuando los controles están deshabilitados (inventario abierto, intro, etc.)
             rb.linearVelocity = Vector2.zero;
             rb.angularVelocity = 0f;
             return;
@@ -147,11 +155,10 @@ public class PlayerController : MonoBehaviour
         if (piernasAnimator != null) piernasAnimator.SetFloat("speed", currentSpeed);
     }
 
-    // El inventario sigue llamando a este mismo método para actualizar lo que llevas en la mano
     public void ActualizarItemEnMano(ItemData item)
     {
         itemDataActivo = item;
-        itemEquipadoVirtual = item as IItemEquipable; // Si el ScriptableObject tiene lógica, lo engancha
+        itemEquipadoVirtual = item as IItemEquipable;
 
         if (torsoAnimator == null) return;
 
@@ -161,7 +168,6 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // Cambiamos el set de animaciones del torso (Bate, Pistola, Desarmado...)
         torsoAnimator.runtimeAnimatorController = item.torsoOverride;
     }
 
@@ -173,11 +179,45 @@ public class PlayerController : MonoBehaviour
         if (rb != null)
         {
             rb.linearVelocity = Vector2.zero;
-            // BUG 1 FIX: Limpiar velocidad angular acumulada por colisiones
-            // para evitar que el personaje siga girando en bucle
             rb.angularVelocity = 0f;
         }
 
         UpdateAnimatorsSpeed(0f);
+    }
+
+    // Método público original adaptado
+    public void AlterarVelocidadPorEstado(RoomState estado)
+    {
+        speed = (estado == RoomState.Nightmare) ? nightmareSpeed : normalSpeed;
+    }
+
+    // GESTIÓN DE EVENTOS DE HABITACIÓN
+    private void OnRoomChanged(RoomStateManager nuevaSala)
+    {
+        DesvincularDeSalaActual();
+
+        if (nuevaSala != null)
+        {
+            roomSuscrita = nuevaSala;
+            // Escuchamos si la sala actual cambia entre Normal y Pesadilla en tiempo real
+            roomSuscrita.StateChanged += OnRoomStateChanged; 
+            
+            // Forzamos la actualización inmediata de la velocidad al pisar la sala
+            AlterarVelocidadPorEstado(roomSuscrita.CurrentState);
+        }
+    }
+
+    private void OnRoomStateChanged(RoomState nuevoEstado)
+    {
+        AlterarVelocidadPorEstado(nuevoEstado);
+    }
+
+    private void DesvincularDeSalaActual()
+    {
+        if (roomSuscrita != null)
+        {
+            roomSuscrita.StateChanged -= OnRoomStateChanged;
+            roomSuscrita = null;
+        }
     }
 }

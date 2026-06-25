@@ -7,8 +7,15 @@ public class Interruptor : MonoBehaviour, IInteractable
     [SerializeField] private ItemData repairItem;
     [SerializeField] private bool estaReparado;
 
+    private AudioSource audioSourceLocal;
+
     private void Awake()
     {
+        audioSourceLocal = GetComponent<AudioSource>();
+        if (!estaReparado)
+        {
+            audioSourceLocal.Play();
+        }
         if (roomStateManager == null)
         {
             roomStateManager = FindAnyObjectByType<RoomStateManager>();
@@ -72,6 +79,7 @@ public class Interruptor : MonoBehaviour, IInteractable
         }
 
         estaReparado = true;
+        audioSourceLocal.Stop();
         Debug.Log("Interruptor reparado");
     }
 }

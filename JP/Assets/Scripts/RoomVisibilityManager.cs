@@ -5,6 +5,7 @@ public class RoomVisibilityManager : MonoBehaviour
     private PlayerRoomTracker playerTracker;
     private RoomStateManager[] allRooms;
     private Puerta[] allDoors;
+    private CameraController cameraCtrl; // Guardamos la referencia de la cámara
 
     private void Awake()
     {
@@ -12,6 +13,7 @@ public class RoomVisibilityManager : MonoBehaviour
         playerTracker = FindAnyObjectByType<PlayerRoomTracker>();
         allRooms = FindObjectsByType<RoomStateManager>();
         allDoors = FindObjectsByType<Puerta>();
+        cameraCtrl = FindAnyObjectByType<CameraController>(); // Buscamos nuestro script de zoom
     }
 
     private void OnEnable()
@@ -66,6 +68,12 @@ public class RoomVisibilityManager : MonoBehaviour
         if (currentRoom == null)
         {
             return;
+        }
+
+        if (cameraCtrl != null)
+        {
+            cameraCtrl.AlterarZoomPorEstado(currentRoom.CurrentState); 
+            // Revisa si en tu RoomStateManager la propiedad se llama 'CurrentState' o 'currentState'
         }
 
         // 1. Actualizar visibilidad de cada habitación

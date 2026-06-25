@@ -219,7 +219,7 @@ Inventarios externos:
 8. SISTEMA DE INTERACCION
 ==============================================================================
 Scripts: MouseInteractor.cs, IInteractable.cs, InventoryInteractable.cs,
-         GroundItem.cs, ArmarioWeaponContainer.cs
+         GroundItem.cs
 
 IInteractable: interfaz con un solo metodo Interact(). Lo implementan todos
 los objetos interactuables del mundo.
@@ -237,8 +237,6 @@ Tipos de objetos interactuables implementados:
     del jugador. Si cabe, destruye el GameObject del suelo.
   - InventoryInteractable: contenedor de inventario (armario, caja, etc.). Al
     interactuar, abre el inventario del jugador con el contenedor externo.
-  - ArmarioWeaponContainer: armario especial con un arma. Al interactuar, anade
-    el arma al inventario del jugador (solo una vez, luego queda vacio).
   - Puerta: interactuable para cruzar entre habitaciones en pesadilla.
   - Interruptor: interruptor de luz para alternar el estado de la habitacion.
 
@@ -329,29 +327,3 @@ Script: ScreenFader.cs
 
   [Singleton]
     |- ScreenFader          -> Fundidos de pantalla globales
-
-==============================================================================
-13. NOTAS SOBRE BUGS CORREGIDOS (25/06/2026)
-==============================================================================
-
-BUG 1 - Rotacion en bucle al abrir inventario externo:
-  CAUSA: RotateTowardsMouse() se ejecutaba siempre en Update() aunque
-  controlsEnabled fuera false. Al abrir el inventario externo mientras el
-  jugador se movia, el personaje seguia rotando hacia el raton de forma erratica.
-  FIX: Se muto RotateTowardsMouse() dentro del bloque controlado por
-  controlsEnabled. Ahora al abrirse cualquier inventario, el sprite se congela
-  correctamente y no da vueltas. Al cerrar, retoma la rotacion desde el estado
-  actual del raton sin "meneo".
-
-BUG 2 - Clic derecho no ejecuta el item equipado:
-  CAUSA: Los slots de la hotbar (siempre visibles en pantalla) tenian el
-  raycastTarget activo en sus componentes Image y Button. Esto hacia que
-  EventSystem.IsPointerOverGameObject() devolviera true cuando el raton
-  pasaba por encima de la hotbar, impidiendo que el click derecho llegase
-  al PlayerController.
-  FIX: En InventorySlotUI.Bind(), los slots con isHotbarSlot = true ahora
-  ponen raycastTarget = false en su Image del boton y en su iconImage.
-  Adicionalmente, en PlayerController se aniadio una comprobacion de
-  InventoryUIController.IsOpen como guarda extra antes de usar el item.
-
-==============================================================================
