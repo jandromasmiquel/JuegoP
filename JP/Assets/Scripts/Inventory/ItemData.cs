@@ -8,6 +8,8 @@ public class ItemData : ScriptableObject
     [SerializeField] private Sprite icon;
     [SerializeField] private bool stackable;
     [SerializeField] private int maxStack = 1;
+    [Header("Animaciones")]
+    public AnimatorOverrideController torsoOverride;
 
     public string ItemId => itemId;
     public string DisplayName => displayName;

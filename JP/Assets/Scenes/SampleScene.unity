@@ -395,7 +395,8 @@ GameObject:
   - component: {fileID: 60755119}
   - component: {fileID: 60755118}
   - component: {fileID: 60755117}
-  m_Layer: 6
+  - component: {fileID: 60755121}
+  m_Layer: 8
   m_Name: Dimoni_pasillo
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -540,6 +541,52 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
+--- !u!61 &60755121
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 60755115}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0.22666667, y: 0.39333335, z: 0.25333333, w: 0.26666668}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 1.7266667, y: 1.4733334}
+    newSize: {x: 2.59, y: 2.21}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 1.7266667, y: 1.4733334}
+  m_EdgeRadius: 0
 --- !u!1001 &70871093
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1534,7 +1581,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5824c0c98bf69fb49949ecf0261b83ed, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
-  maxHealth: 10
+  maxHealth: 100
   destroyOnDeath: 0
 --- !u!61 &203255386
 BoxCollider2D:
@@ -8145,7 +8192,7 @@ MonoBehaviour:
   intensityNightmare: 1
   colorNormal: {r: 1, g: 1, b: 1, a: 1}
   colorNightmare: {r: 0.1, g: 0.1, b: 0.3, a: 1}
-  initialState: 0
+  initialState: 1
 --- !u!43 &1310047846
 Mesh:
   m_ObjectHideFlags: 0

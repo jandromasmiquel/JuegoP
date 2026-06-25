@@ -78,10 +78,19 @@ public class InventoryUIController : MonoBehaviour
         // Forzamos a Unity a calcular las posiciones de la UI (layout) antes de posicionar el highlight por primera vez
         Canvas.ForceUpdateCanvases();
         UpdateHighlightPosition();
+
         if (playerInventory != null && playerInventory.Container != null)
         {
-            playerInventory.Container.Changed += UpdateHotbarVisuals;
+            // Modificamos esto para que haga ambas cosas cuando cambie el inventario:
+            playerInventory.Container.Changed += () => 
+            {
+                UpdateHotbarVisuals();       // 1. Refresca la UI de la hotbar
+                NotificarItemActivoAlPlayer(); // 2. REVISE SI EL ITEM EN MANO HA CAMBIADO
+            };
         }
+
+        // Inicializa el arma en mano al arrancar
+        NotificarItemActivoAlPlayer();
     }
 
     private void AlignPanels()
@@ -242,7 +251,7 @@ public class InventoryUIController : MonoBehaviour
         {
             externalPanel.Refresh();
         }
-
+        NotificarItemActivoAlPlayer();
         UpdateHotbarVisuals();
     }
 
@@ -273,6 +282,7 @@ public class InventoryUIController : MonoBehaviour
         activeSlotIndex = newIndex;
         UpdateHighlightPosition();
         Debug.Log($"Slot activo cambiado al: {activeSlotIndex}");
+        NotificarItemActivoAlPlayer();
     }
 
     private void UpdateHighlightPosition()
@@ -534,6 +544,27 @@ public class InventoryUIController : MonoBehaviour
                 source.amount++;
             }
             // Si era un drag completo, el objeto nunca se borró del origen con tu sistema actual de Swap, por lo que no hace falta hacer nada más.
+        }
+    }
+    private void NotificarItemActivoAlPlayer()
+    {
+        if (playerController == null || playerInventory == null || playerInventory.Container == null) return;
+
+        // Protegemos el rango por si acaso
+        if (activeSlotIndex >= 0 && activeSlotIndex < playerInventory.Container.Slots.Count)
+        {
+            var slotActivo = playerInventory.Container.Slots[activeSlotIndex];
+            
+            if (!slotActivo.IsEmpty)
+            {
+                // Le pasamos el ItemData actual al PlayerController
+                playerController.ActualizarItemEnMano(slotActivo.item);
+            }
+            else
+            {
+                // Mano vacía
+                playerController.ActualizarItemEnMano(null);
+            }
         }
     }
 }

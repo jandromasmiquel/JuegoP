@@ -1,0 +1,357 @@
+==============================================================================
+   RESUMEN DE SISTEMAS Y MECANICAS - JuegoP (Unity 2D Top-Down)
+==============================================================================
+Fecha: 25/06/2026
+Proyecto: JuegoP / JP (Unity 2D)
+Motor: Unity (URP, New Input System)
+Perspectiva: Zenital (Top-Down)
+
+==============================================================================
+1. SISTEMA DE MOVIMIENTO Y CONTROL DEL JUGADOR
+==============================================================================
+Script: PlayerController.cs
+Teclas: WASD / Flechas para moverse
+Tecla uso item: Clic Derecho del raton
+
+- El jugador se mueve con un Rigidbody2D usando velocidad lineal normalizada.
+- La rotacion del personaje (y de sus visuales) sigue al raton en todo momento
+  mediante RotateTowardsMouse(), que calcula el angulo en radianes hacia la
+  posicion del cursor en el mundo.
+- El sprite del personaje esta dividido en dos partes animadas:
+    * "piernas" (piernasAnimator): anima el movimiento segun la velocidad.
+    * "torso" (torsoAnimator): lleva el AnimatorOverrideController del item
+      equipado y ejecuta la animacion de uso con el trigger "Usar_item".
+- controlsEnabled: flag booleano que bloquea el input de movimiento y rotacion
+  (se desactiva al abrir inventario, cinematics, etc.).
+- SetControlsEnabled(bool): metodo publico para activar/desactivar controles
+  desde otros sistemas. Resetea velocidad y animacion al desactivar.
+- ActualizarItemEnMano(ItemData): metodo publico que recibe el ItemData del
+  slot activo de la hotbar. Si el item implementa IItemEquipable, lo guarda
+  como itemEquipadoVirtual. Cambia el AnimatorOverrideController del torso.
+
+Referencia al InventoryUIController para saber si el inventario esta abierto
+(evita que el clic derecho active items mientras el inventario esta visible).
+
+==============================================================================
+2. SISTEMA DE CAMARA Y CAMPO DE VISION (FOV)
+==============================================================================
+Scripts: FieldOfView.cs, HiddenObjectVisibility.cs
+
+Campo de Vision (FieldOfView):
+- Genera un mesh triangulado en tiempo real usando raycasting 2D (500 rayos).
+- Define un cono de vision frontal con angulo configurable (fov) y distancia
+  maxima (viewDistance).
+- Se actualiza en LateUpdate() para coincidir con la posicion final del player.
+- Los rayos rebotan contra la LayerMask configurada (paredes, obstaculos).
+- CanSeePoint(Vector2): metodo de consulta para comprobar si un punto del mundo
+  es visible desde el FOV (usado por HiddenObjectVisibility).
+
+Visibilidad de Objetos Ocultos (HiddenObjectVisibility):
+- Componente que se adjunta a objetos del escenario que deben ocultarse si no
+  estan dentro del cono de vision del jugador.
+- En LateUpdate comprueba si el centro del sprite (y opcionalmente sus 4
+  esquinas del bounding box) es visible mediante FieldOfView.CanSeePoint().
+- Activa/desactiva el SpriteRenderer segun el resultado.
+
+==============================================================================
+3. SISTEMA DE HABITACIONES Y ESTADOS DEL MUNDO
+==============================================================================
+Scripts: RoomStateManager.cs, RoomTrigger.cs, RoomVisibilityManager.cs,
+         PlayerRoomTracker.cs
+
+Estados posibles de una habitacion (enum RoomState):
+    - Normal:    Mundo real. Luz intensa, objetos reales visibles.
+    - Nightmare: Pesadilla. Luz tenue azulada, objetos de pesadilla visibles.
+
+RoomStateManager:
+- Cada habitacion tiene su propio RoomStateManager con dos grupos de objetos:
+    * normalGroup:    objetos visibles en modo Normal.
+    * nightmareGroup: objetos visibles en modo Pesadilla.
+- Controla la luz 2D global de la habitacion (intensidad y color segun estado).
+- SetState(RoomState): cambia el estado y dispara el evento StateChanged.
+- ToggleWorld(): alterna entre Normal y Pesadilla.
+- SetRoomVisibility(bool): controla si la habitacion entera se muestra o no
+  (usado por RoomVisibilityManager para ocultar habitaciones lejanas).
+
+PlayerRoomTracker:
+- Componente en el player que registra en que habitacion se encuentra.
+- Se actualiza automaticamente al entrar en el trigger de una habitacion.
+- Dispara el evento RoomChanged(RoomStateManager) al cambiar de sala.
+
+RoomTrigger:
+- Collider2D en modo trigger que cubre el area de la habitacion.
+- Al detectar al player (PlayerRoomTracker), llama a SetCurrentRoom() del
+  tracker para actualizar la sala actual.
+
+RoomVisibilityManager:
+- Gestor global que escucha los eventos RoomChanged y StateChanged.
+- Logica de visibilidad:
+    * La habitacion actual del jugador siempre se muestra.
+    * Una habitacion adyacente (conectada por una Puerta) solo es visible si
+      AMBAS (actual y adyacente) estan en modo Normal.
+    * Cualquier otra habitacion queda oculta.
+- Actualiza el estado visual de todas las puertas al cambiar de sala o estado.
+
+==============================================================================
+4. SISTEMA DE PUERTAS Y TRANSICION ENTRE HABITACIONES
+==============================================================================
+Script: Puerta.cs
+
+- Cada puerta conecta dos habitaciones (RoomStateManager roomA y roomB).
+- Tiene puntos de spawn para ambos lados (spawnPointA, spawnPointB).
+- Visual: dos GameObjects (visualOpen, visualClosed) y un Collider2D fisico.
+
+Logica de estado de la puerta (UpdateDoorState):
+  - Si el jugador NO esta en ninguna de sus dos salas: cerrada, no interactuable.
+  - Si la sala actual esta en Pesadilla: cerrada, no interactuable (bloqueado
+    dentro de la pesadilla hasta resolver la habitacion).
+  - Si la sala actual esta en Normal y la contigua en Normal: ABIERTA, el
+    jugador puede pasar caminando libremente (colisionador desactivado).
+  - Si la sala actual esta en Normal y la contigua en Pesadilla: cerrada pero
+    INTERACTUABLE. Al interactuar se teleporta al jugador a la pesadilla.
+
+Transicion al cruzar (Interact):
+- Usa ScreenFader para un fundido a negro.
+- Durante el fundido: resetea velocidad del Rigidbody2D, teleporta al jugador
+  al spawn point de la habitacion destino.
+- Activa el estado Pesadilla en la sala destino.
+- Actualiza el PlayerRoomTracker al nuevo destino.
+
+==============================================================================
+5. SISTEMA DE INTERRUPTOR (LUZ / PESADILLA)
+==============================================================================
+Script: Interruptor.cs
+
+- Objeto interactuable que alterna el estado de una habitacion entre Normal y
+  Pesadilla mediante ToggleWorld() del RoomStateManager.
+- Puede estar ROTO (estaReparado = false). En ese caso hay que repararlo
+  primero usando un item especifico del inventario (repairItem).
+- TryRepair(): consume el item de reparacion del inventario del jugador y marca
+  el interruptor como reparado.
+- Solo funciona si el jugador esta fisicamente dentro de la misma habitacion
+  (verificado mediante PlayerRoomTracker).
+- Al cambiar de estado usa ScreenFader: fundido a blanco si pasa a Normal,
+  fundido a negro si pasa a Pesadilla.
+
+==============================================================================
+6. SISTEMA DE INVENTARIO
+==============================================================================
+Scripts: InventoryContainer.cs, InventorySlot.cs, PlayerInventory.cs,
+         ItemData.cs, WeaponItemData.cs, IItemEquipable.cs
+
+Estructura de datos:
+- InventorySlot: clase serializable que contiene (ItemData item, int amount).
+  Tiene IsEmpty para comprobar si esta vacio, y metodos Set() y Clear().
+- InventoryContainer: componente MonoBehaviour que gestiona una lista de
+  InventorySlot con numero configurable de huecos (slotCount).
+  Dispara el evento Changed cuando el contenido cambia.
+
+Operaciones del InventoryContainer:
+  - AddItem(ItemData, int amount): anade items al inventario. Si el item es
+    stackeable, intenta rellenar stacks existentes antes de abrir nuevo hueco.
+  - HasItem(ItemData, int amount): comprueba si hay suficiente cantidad.
+  - TryRemoveItem(ItemData, int amount): elimina cantidad si existe.
+  - SwapSlots(int, int): intercambia dos slots.
+  - MoveSlotTo(InventoryContainer target, int src, int dst): mueve un slot a
+    otro contenedor. Si hay mismo item stackeable, combina; si no, hace swap.
+  - MoveItemInstant(int src, InventoryContainer target): mueve un slot completo
+    al primer espacio disponible del contenedor destino.
+  - MoveSingleItemFrom(InventoryContainer src, int srcIdx): mueve 1 unidad del
+    origen a este contenedor (para Ctrl+Click).
+
+PlayerInventory:
+- Wrapper ligero sobre InventoryContainer para el jugador.
+- Expone AddItem, HasItem, TryUseItem.
+
+Items (ScriptableObjects):
+- ItemData: base. Tiene id, nombre, icono, stackeable/maxStack, y un
+  AnimatorOverrideController (torsoOverride) para animar el torso del jugador.
+- WeaponItemData: hereda de ItemData e implementa IItemEquipable. Tiene
+  damage, cooldown y attackRadius. EnUsar() ejecuta un OverlapCircleAll para
+  detectar y danar enemigos en rango. Devuelve true si el ataque fue exitoso
+  (cooldown pasado) y false si aun esta en cooldown.
+- IItemEquipable: interfaz con el metodo bool EnUsar(PlayerController, Transform).
+  Cualquier ItemData que la implemente puede ser "usado" con clic derecho.
+
+==============================================================================
+7. SISTEMA DE UI DE INVENTARIO (HOTBAR + INVENTARIO COMPLETO)
+==============================================================================
+Script: InventoryUIController.cs, InventoryPanelUI.cs, InventorySlotUI.cs
+
+Hotbar (siempre visible):
+- 3 slots pasivos en la parte superior de la pantalla.
+- Se selecciona el slot activo con las teclas 1, 2 y 3.
+- Un highlight visual (selectionHighlight) marca el slot activo.
+- El item del slot activo se notifica al PlayerController mediante
+  ActualizarItemEnMano() para cambiar animaciones y logica de uso.
+- Los slots de hotbar tienen raycastTarget = false para NO interceptar
+  eventos de raton (permite usar items con clic derecho sin bloqueo).
+
+Inventario completo (Tab):
+- Se abre/cierra con Tab (toggleAction).
+- Al abrirse: deshabilita controles del jugador (SetControlsEnabled(false)),
+  muestra el cursor.
+- Al cerrarse: re-habilita controles, devuelve items a medio arrastrar.
+- Muestra el inventario del jugador (playerPanel) y opcionalmente un
+  contenedor externo (externalPanel) al interactuar con armarios/cajas.
+
+Drag & Drop de items:
+  - Clic izquierdo en slot vacio/con item: levanta TODO el stack con icono
+    flotante (dragIcon).
+  - Clic derecho en slot con >1 item: levanta solo 1 unidad del stack.
+  - Soltar en slot vacio: deposita.
+  - Soltar en slot con mismo item stackeable: combina.
+  - Soltar en slot distinto: hace swap.
+  - Click en mismo slot de origen: devuelve el item.
+
+Modificadores de teclado al hacer click en inventario:
+  - Shift + Click: traspaso rapido completo al otro inventario (jugador <-> externo).
+  - Ctrl + Click: traspaso de solo 1 unidad al otro inventario.
+  - Ctrl + Shift + Click: tirar todo el stack al suelo (eliminar).
+  - Alt + Click: equipar rapidamente al primer hueco libre de la hotbar (slots 0-2).
+
+Inventarios externos:
+- OpenExternalContainer(InventoryContainer, string): abre el inventario
+  mostrando el contenedor externo en el panel derecho. Llamado por
+  InventoryInteractable al interactuar con armarios, cajas, etc.
+
+==============================================================================
+8. SISTEMA DE INTERACCION
+==============================================================================
+Scripts: MouseInteractor.cs, IInteractable.cs, InventoryInteractable.cs,
+         GroundItem.cs, ArmarioWeaponContainer.cs
+
+IInteractable: interfaz con un solo metodo Interact(). Lo implementan todos
+los objetos interactuables del mundo.
+
+MouseInteractor (en el player):
+- Detecta con un Raycast 2D la posicion del cursor en el mundo.
+- Si hay un objeto interactuable en rango (maxDistance configurable), cambia
+  el cursor a un icono personalizado.
+- Al hacer clic izquierdo, llama a IInteractable.Interact() si el objeto esta
+  en rango y no hay UI superpuesta.
+- No funciona durante transiciones (ScreenFader.IsFading = true).
+
+Tipos de objetos interactuables implementados:
+  - GroundItem: item en el suelo. Al interactuar, intenta anadirlo al inventario
+    del jugador. Si cabe, destruye el GameObject del suelo.
+  - InventoryInteractable: contenedor de inventario (armario, caja, etc.). Al
+    interactuar, abre el inventario del jugador con el contenedor externo.
+  - ArmarioWeaponContainer: armario especial con un arma. Al interactuar, anade
+    el arma al inventario del jugador (solo una vez, luego queda vacio).
+  - Puerta: interactuable para cruzar entre habitaciones en pesadilla.
+  - Interruptor: interruptor de luz para alternar el estado de la habitacion.
+
+==============================================================================
+9. SISTEMA DE ENEMIGOS
+==============================================================================
+Scripts: DimoniController.cs, DimoniIntroSequence.cs
+
+DimoniController (enemigo principal tipo "tyrant"):
+- Persigue al jugador mediante Rigidbody2D con steering simple.
+- ChooseMoveDirection(): si el camino directo esta bloqueado por un obstaculo
+  (Raycast), intenta ir por la izquierda o derecha para rodearlo.
+- TryAttack(): si el jugador esta en attackRange, aplica dano al componente
+  Health del jugador. Tiene cooldown entre ataques.
+- SetActive(bool): puede activarse/desactivarse desde otros scripts (se usa
+  durante secuencias de intro).
+
+DimoniIntroSequence:
+- Cinemática de introduccion del Dimoni al inicio de la escena.
+- Bloquea los controles del jugador (SetControlsEnabled(false)).
+- Mueve el objeto "dimoniIntroObject" desde un punto inicio hasta un punto fin
+  en un tiempo configurable (dimoniRunDuration).
+- Al terminar, desactiva el objeto intro y re-habilita los controles del jugador.
+- playOnStart: si es true se ejecuta automaticamente al arrancar la escena.
+
+==============================================================================
+10. SISTEMA DE SALUD Y DANO
+==============================================================================
+Script: Health.cs
+
+- Componente generico de salud para el jugador y enemigos.
+- TakeDamage(int): reduce salud. No hace nada si ya esta muerto o dano <= 0.
+- Heal(int): recupera salud hasta el maximo.
+- Eventos:
+    * Changed(currentHealth, maxHealth): se dispara cada vez que cambia la
+      salud (para actualizar UI de barra de vida, etc.).
+    * Died(): se dispara cuando la salud llega a 0.
+- destroyOnDeath: si es true, destruye el GameObject al morir (util para
+  enemigos. El jugador probablemente no debe usarlo).
+
+==============================================================================
+11. SISTEMA DE TRANSICIONES DE PANTALLA (SCREEN FADER)
+==============================================================================
+Script: ScreenFader.cs
+
+- Singleton persistente (DontDestroyOnLoad) con pattern lazy-init.
+- Crea dinamicamente un Canvas con una Image que cubre toda la pantalla.
+- DoTransition(color, fadeOut, hold, fadeIn, callback):
+    1. Fundido de transparente al color objetivo (negro o blanco).
+    2. Ejecuta la accion del callback (teletransporte, cambio de estado...).
+    3. Mantiene el color en pantalla (hold).
+    4. Fundido de vuelta a transparente.
+- IsFading: flag publico que bloquea interacciones (MouseInteractor,
+  InventoryUIController) durante la transicion.
+
+==============================================================================
+12. RESUMEN DE ARQUITECTURA Y FLUJO GENERAL
+==============================================================================
+
+  [Player GameObject]
+    |- PlayerController     -> Movimiento, rotacion, uso de items con RMB
+    |- PlayerInventory      -> Wrapper del inventario del jugador
+    |- InventoryContainer   -> Slots de datos del inventario
+    |- PlayerRoomTracker    -> Sala actual del jugador
+    |- MouseInteractor      -> Deteccion de interactuables por raycast
+    |- Health               -> Salud del jugador
+    |- FieldOfView          -> Cono de vision (mesh raycast)
+    |- Rigidbody2D          -> Fisica
+
+  [Canvas]
+    |- InventoryUIController -> Hotbar + inventario completo + drag&drop
+
+  [Escena - Habitaciones]
+    |- RoomStateManager[N]  -> Estado de cada habitacion (Normal/Pesadilla)
+    |- RoomTrigger[N]       -> Trigger de deteccion de sala para el player
+    |- RoomVisibilityManager -> Gestor global de visibilidad y puertas
+
+  [Interactuables]
+    |- Puerta               -> Transicion entre salas
+    |- Interruptor          -> Cambia estado Normal <-> Pesadilla
+    |- InventoryInteractable -> Abre inventario externo
+    |- GroundItem           -> Item recogible del suelo
+    |- ArmarioWeaponContainer -> Armario con arma especifica
+
+  [Enemigos]
+    |- DimoniController     -> IA de persecucion y ataque
+    |- DimoniIntroSequence  -> Cinematica de intro del Dimoni
+
+  [Singleton]
+    |- ScreenFader          -> Fundidos de pantalla globales
+
+==============================================================================
+13. NOTAS SOBRE BUGS CORREGIDOS (25/06/2026)
+==============================================================================
+
+BUG 1 - Rotacion en bucle al abrir inventario externo:
+  CAUSA: RotateTowardsMouse() se ejecutaba siempre en Update() aunque
+  controlsEnabled fuera false. Al abrir el inventario externo mientras el
+  jugador se movia, el personaje seguia rotando hacia el raton de forma erratica.
+  FIX: Se muto RotateTowardsMouse() dentro del bloque controlado por
+  controlsEnabled. Ahora al abrirse cualquier inventario, el sprite se congela
+  correctamente y no da vueltas. Al cerrar, retoma la rotacion desde el estado
+  actual del raton sin "meneo".
+
+BUG 2 - Clic derecho no ejecuta el item equipado:
+  CAUSA: Los slots de la hotbar (siempre visibles en pantalla) tenian el
+  raycastTarget activo en sus componentes Image y Button. Esto hacia que
+  EventSystem.IsPointerOverGameObject() devolviera true cuando el raton
+  pasaba por encima de la hotbar, impidiendo que el click derecho llegase
+  al PlayerController.
+  FIX: En InventorySlotUI.Bind(), los slots con isHotbarSlot = true ahora
+  ponen raycastTarget = false en su Image del boton y en su iconImage.
+  Adicionalmente, en PlayerController se aniadio una comprobacion de
+  InventoryUIController.IsOpen como guarda extra antes de usar el item.
+
+==============================================================================

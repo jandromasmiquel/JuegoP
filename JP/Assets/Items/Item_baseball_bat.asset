@@ -17,7 +17,10 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: 1453a0d353904ec49b60f494db2e72fd, type: 3}
   stackable: 0
   maxStack: 1
-  equippedPrefab: {fileID: 0}
+  torsoOverride: {fileID: 22100000, guid: 9607a5ce889cd8f44b005a9d375b1e15, type: 2}
   damage: 25
   cooldown: 1
   attackRadius: 0.75
+  damageMask:
+    serializedVersion: 2
+    m_Bits: 256

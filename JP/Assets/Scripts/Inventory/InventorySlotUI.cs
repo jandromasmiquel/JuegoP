@@ -31,7 +31,11 @@ public class InventorySlotUI : MonoBehaviour, IPointerClickHandler
         {
             if (isHotbarSlot)
             {
-                button.enabled = false; 
+                button.enabled = false;
+                // BUG 2 FIX: Los hotbar slots no deben interceptar eventos de ratón
+                // para que el PlayerController pueda recibir el click derecho correctamente
+                Image btnImage = button.GetComponent<Image>();
+                if (btnImage != null) btnImage.raycastTarget = false;
             }
             else
             {
@@ -47,6 +51,8 @@ public class InventorySlotUI : MonoBehaviour, IPointerClickHandler
         {
             iconImage.enabled = hasItem;
             iconImage.sprite = hasItem ? slot.item.Icon : null;
+            // Los iconos de hotbar tampoco deben bloquear el raycast
+            if (isHotbarSlot) iconImage.raycastTarget = false;
         }
 
         if (amountText != null)
