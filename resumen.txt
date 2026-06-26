@@ -1,57 +1,57 @@
 ==============================================================================
    RESUMEN DE SISTEMAS Y MECANICAS - JuegoP (Unity 2D Top-Down)
 ==============================================================================
-Fecha: 25/06/2026
+Fecha: 26/06/2026
 Proyecto: JuegoP / JP (Unity 2D)
-Motor: Unity (URP, New Input System)
-Perspectiva: Zenital (Top-Down)
+Motor: Unity 6 (URP, New Input System)
+Perspectiva: Cenital (Top-Down)
 
 ==============================================================================
 1. SISTEMA DE MOVIMIENTO Y CONTROL DEL JUGADOR
 ==============================================================================
 Script: PlayerController.cs
 Teclas: WASD / Flechas para moverse
-Tecla uso item: Clic Derecho del raton
+Tecla uso item: Clic Derecho del ratón
 
 - El jugador se mueve con un Rigidbody2D usando velocidad lineal normalizada.
-- La rotacion del personaje (y de sus visuales) sigue al raton en todo momento
-  mediante RotateTowardsMouse(), que calcula el angulo en radianes hacia la
-  posicion del cursor en el mundo.
-- El sprite del personaje esta dividido en dos partes animadas:
-    * "piernas" (piernasAnimator): anima el movimiento segun la velocidad.
-    * "torso" (torsoAnimator): lleva el AnimatorOverrideController del item
-      equipado y ejecuta la animacion de uso con el trigger "Usar_item".
-- controlsEnabled: flag booleano que bloquea el input de movimiento y rotacion
-  (se desactiva al abrir inventario, cinematics, etc.).
-- SetControlsEnabled(bool): metodo publico para activar/desactivar controles
-  desde otros sistemas. Resetea velocidad y animacion al desactivar.
-- ActualizarItemEnMano(ItemData): metodo publico que recibe el ItemData del
-  slot activo de la hotbar. Si el item implementa IItemEquipable, lo guarda
+- La rotación del personaje (y de sus visuales) sigue al ratón en todo momento
+  mediante RotateTowardsMouse(), que calcula el ángulo en radianes hacia la
+  posición del cursor en el mundo.
+- El sprite del personaje está dividido en dos partes animadas:
+    * "piernas" (piernasAnimator): anima el movimiento según la velocidad.
+    * "torso" (torsoAnimator): lleva el AnimatorOverrideController del ítem
+      equipado y ejecuta la animación de uso con el trigger "Usar_item".
+- controlsEnabled: flag booleano que bloquea el input de movimiento y rotación
+  (se desactiva al abrir inventario, cinemáticas, etc.).
+- SetControlsEnabled(bool): método público para activar/desactivar controles
+  desde otros sistemas. Resetea velocidad y animación al desactivar.
+- ActualizarItemEnMano(ItemData): método público que recibe el ItemData del
+  slot activo de la hotbar. Si el ítem implementa IItemEquipable, lo guarda
   como itemEquipadoVirtual. Cambia el AnimatorOverrideController del torso.
 
-Referencia al InventoryUIController para saber si el inventario esta abierto
-(evita que el clic derecho active items mientras el inventario esta visible).
+Referencia al InventoryUIController para saber si el inventario está abierto
+(evita que el clic derecho active ítems mientras el inventario está visible).
 
 ==============================================================================
-2. SISTEMA DE CAMARA Y CAMPO DE VISION (FOV)
+2. SISTEMA DE CÁMARA Y CAMPO DE VISIÓN (FOV)
 ==============================================================================
 Scripts: FieldOfView.cs, HiddenObjectVisibility.cs
 
-Campo de Vision (FieldOfView):
+Campo de Visión (FieldOfView):
 - Genera un mesh triangulado en tiempo real usando raycasting 2D (500 rayos).
-- Define un cono de vision frontal con angulo configurable (fov) y distancia
-  maxima (viewDistance).
-- Se actualiza en LateUpdate() para coincidir con la posicion final del player.
-- Los rayos rebotan contra la LayerMask configurada (paredes, obstaculos).
-- CanSeePoint(Vector2): metodo de consulta para comprobar si un punto del mundo
+- Define un cono de visión frontal con ángulo configurable (fov) y distancia
+  máxima (viewDistance).
+- Se Burila en LateUpdate() para coincidir con la posición final del player.
+- Los rayos rebotan contra la LayerMask configurada (paredes, obstáculos).
+- CanSeePoint(Vector2): método de consulta para comprobar si un punto del mundo
   es visible desde el FOV (usado por HiddenObjectVisibility).
 
 Visibilidad de Objetos Ocultos (HiddenObjectVisibility):
 - Componente que se adjunta a objetos del escenario que deben ocultarse si no
-  estan dentro del cono de vision del jugador.
+  están dentro del cono de visión del jugador.
 - En LateUpdate comprueba si el centro del sprite (y opcionalmente sus 4
   esquinas del bounding box) es visible mediante FieldOfView.CanSeePoint().
-- Activa/desactiva el SpriteRenderer segun el resultado.
+- Activa/desactiva el SpriteRenderer según el resultado.
 
 ==============================================================================
 3. SISTEMA DE HABITACIONES Y ESTADOS DEL MUNDO
@@ -59,61 +59,61 @@ Visibilidad de Objetos Ocultos (HiddenObjectVisibility):
 Scripts: RoomStateManager.cs, RoomTrigger.cs, RoomVisibilityManager.cs,
          PlayerRoomTracker.cs
 
-Estados posibles de una habitacion (enum RoomState):
+Estados posibles de una habitación (enum RoomState):
     - Normal:    Mundo real. Luz intensa, objetos reales visibles.
     - Nightmare: Pesadilla. Luz tenue azulada, objetos de pesadilla visibles.
 
 RoomStateManager:
-- Cada habitacion tiene su propio RoomStateManager con dos grupos de objetos:
+- Cada habitación tiene su propio RoomStateManager con dos grupos de objetos:
     * normalGroup:    objetos visibles en modo Normal.
     * nightmareGroup: objetos visibles en modo Pesadilla.
-- Controla la luz 2D global de la habitacion (intensidad y color segun estado).
+- Controla la luz 2D global de la habitación (intensidad y color según estado).
 - SetState(RoomState): cambia el estado y dispara el evento StateChanged.
 - ToggleWorld(): alterna entre Normal y Pesadilla.
-- SetRoomVisibility(bool): controla si la habitacion entera se muestra o no
+- SetRoomVisibility(bool): controla si la habitación entera se muestra o no
   (usado por RoomVisibilityManager para ocultar habitaciones lejanas).
 
 PlayerRoomTracker:
-- Componente en el player que registra en que habitacion se encuentra.
-- Se actualiza automaticamente al entrar en el trigger de una habitacion.
+- Componente en el player que registra en qué habitación se encuentra.
+- Se actualiza automáticamente al entrar en el trigger de una habitación.
 - Dispara el evento RoomChanged(RoomStateManager) al cambiar de sala.
 
 RoomTrigger:
-- Collider2D en modo trigger que cubre el area de la habitacion.
+- Collider2D en modo trigger que cubre el área de la habitación.
 - Al detectar al player (PlayerRoomTracker), llama a SetCurrentRoom() del
   tracker para actualizar la sala actual.
 
 RoomVisibilityManager:
 - Gestor global que escucha los eventos RoomChanged y StateChanged.
-- Logica de visibilidad:
-    * La habitacion actual del jugador siempre se muestra.
-    * Una habitacion adyacente (conectada por una Puerta) solo es visible si
-      AMBAS (actual y adyacente) estan en modo Normal.
-    * Cualquier otra habitacion queda oculta.
+- Lógica de visibilidad:
+    * La habitación actual del jugador siempre se muestra.
+    * Una habitación adyacente (conectada por una Puerta) solo es visible si
+      AMBAS (actual y adyacente) están en modo Normal.
+    * Cualquier otra habitación queda oculta.
 - Actualiza el estado visual de todas las puertas al cambiar de sala o estado.
 
 ==============================================================================
-4. SISTEMA DE PUERTAS Y TRANSICION ENTRE HABITACIONES
+4. SISTEMA DE PUERTAS Y TRANSICIÓN ENTRE HABITACIONES
 ==============================================================================
 Script: Puerta.cs
 
 - Cada puerta conecta dos habitaciones (RoomStateManager roomA y roomB).
 - Tiene puntos de spawn para ambos lados (spawnPointA, spawnPointB).
-- Visual: dos GameObjects (visualOpen, visualClosed) y un Collider2D fisico.
+- Visual: dos GameObjects (visualOpen, visualClosed) y un Collider2D físico.
 
-Logica de estado de la puerta (UpdateDoorState):
-  - Si el jugador NO esta en ninguna de sus dos salas: cerrada, no interactuable.
-  - Si la sala actual esta en Pesadilla: cerrada, no interactuable (bloqueado
-    dentro de la pesadilla hasta resolver la habitacion).
-  - Si la sala actual esta en Normal y la contigua en Normal: ABIERTA, el
+Lógica de estado de la puerta (UpdateDoorState):
+  - Si el jugador NO está en ninguna de sus dos salas: cerrada, no interactuable.
+  - Si la sala actual está en Pesadilla: cerrada, no interactuable (bloqueado
+    dentro de la pesadilla hasta resolver la habitación).
+  - Si la sala actual está en Normal y la contigua en Normal: ABIERTA, el
     jugador puede pasar caminando libremente (colisionador desactivado).
-  - Si la sala actual esta en Normal y la contigua en Pesadilla: cerrada pero
+  - Si la sala actual está en Normal y la contigua en Pesadilla: cerrada pero
     INTERACTUABLE. Al interactuar se teleporta al jugador a la pesadilla.
 
-Transicion al cruzar (Interact):
+Transición al cruzar (Interact):
 - Usa ScreenFader para un fundido a negro.
 - Durante el fundido: resetea velocidad del Rigidbody2D, teleporta al jugador
-  al spawn point de la habitacion destino.
+  al spawn point de la habitación destino.
 - Activa el estado Pesadilla en la sala destino.
 - Actualiza el PlayerRoomTracker al nuevo destino.
 
@@ -122,13 +122,13 @@ Transicion al cruzar (Interact):
 ==============================================================================
 Script: Interruptor.cs
 
-- Objeto interactuable que alterna el estado de una habitacion entre Normal y
+- Objeto interactuable que alterna el estado de una habitación entre Normal y
   Pesadilla mediante ToggleWorld() del RoomStateManager.
 - Puede estar ROTO (estaReparado = false). En ese caso hay que repararlo
-  primero usando un item especifico del inventario (repairItem).
-- TryRepair(): consume el item de reparacion del inventario del jugador y marca
+  primero usando un ítem específico del inventario (repairItem).
+- TryRepair(): consume el ítem de reparación del inventario del jugador y marca
   el interruptor como reparado.
-- Solo funciona si el jugador esta fisicamente dentro de la misma habitacion
+- Solo funciona si el jugador está físicamente dentro de la misma habitación
   (verificado mediante PlayerRoomTracker).
 - Al cambiar de estado usa ScreenFader: fundido a blanco si pasa a Normal,
   fundido a negro si pasa a Pesadilla.
@@ -141,19 +141,19 @@ Scripts: InventoryContainer.cs, InventorySlot.cs, PlayerInventory.cs,
 
 Estructura de datos:
 - InventorySlot: clase serializable que contiene (ItemData item, int amount).
-  Tiene IsEmpty para comprobar si esta vacio, y metodos Set() y Clear().
+  Tiene IsEmpty para comprobar si está vacío, y métodos Set() y Clear().
 - InventoryContainer: componente MonoBehaviour que gestiona una lista de
-  InventorySlot con numero configurable de huecos (slotCount).
+  InventorySlot con número configurable de huecos (slotCount).
   Dispara el evento Changed cuando el contenido cambia.
 
 Operaciones del InventoryContainer:
-  - AddItem(ItemData, int amount): anade items al inventario. Si el item es
+  - AddItem(ItemData, int amount): añade ítems al inventario. Si el ítem es
     stackeable, intenta rellenar stacks existentes antes de abrir nuevo hueco.
   - HasItem(ItemData, int amount): comprueba si hay suficiente cantidad.
   - TryRemoveItem(ItemData, int amount): elimina cantidad si existe.
   - SwapSlots(int, int): intercambia dos slots.
   - MoveSlotTo(InventoryContainer target, int src, int dst): mueve un slot a
-    otro contenedor. Si hay mismo item stackeable, combina; si no, hace swap.
+    otro contenedor. Si hay mismo ítem stackeable, combina; si no, hace swap.
   - MoveItemInstant(int src, InventoryContainer target): mueve un slot completo
     al primer espacio disponible del contenedor destino.
   - MoveSingleItemFrom(InventoryContainer src, int srcIdx): mueve 1 unidad del
@@ -163,14 +163,14 @@ PlayerInventory:
 - Wrapper ligero sobre InventoryContainer para el jugador.
 - Expone AddItem, HasItem, TryUseItem.
 
-Items (ScriptableObjects):
+Ítems (ScriptableObjects):
 - ItemData: base. Tiene id, nombre, icono, stackeable/maxStack, y un
   AnimatorOverrideController (torsoOverride) para animar el torso del jugador.
 - WeaponItemData: hereda de ItemData e implementa IItemEquipable. Tiene
   damage, cooldown y attackRadius. EnUsar() ejecuta un OverlapCircleAll para
-  detectar y danar enemigos en rango. Devuelve true si el ataque fue exitoso
-  (cooldown pasado) y false si aun esta en cooldown.
-- IItemEquipable: interfaz con el metodo bool EnUsar(PlayerController, Transform).
+  detectar y dañar enemigos en rango. Devuelve true si el ataque fue exitoso
+  (cooldown pasado) y false si aún está en cooldown.
+- IItemEquipable: interfaz con el método bool EnUsar(PlayerController, Transform).
   Cualquier ItemData que la implemente puede ser "usado" con clic derecho.
 
 ==============================================================================
@@ -182,33 +182,33 @@ Hotbar (siempre visible):
 - 3 slots pasivos en la parte superior de la pantalla.
 - Se selecciona el slot activo con las teclas 1, 2 y 3.
 - Un highlight visual (selectionHighlight) marca el slot activo.
-- El item del slot activo se notifica al PlayerController mediante
-  ActualizarItemEnMano() para cambiar animaciones y logica de uso.
+- El ítem del slot activo se notifica al PlayerController mediante
+  ActualizarItemEnMano() para cambiar animaciones y lógica de uso.
 - Los slots de hotbar tienen raycastTarget = false para NO interceptar
-  eventos de raton (permite usar items con clic derecho sin bloqueo).
+  eventos de ratón (permite usar ítems con clic derecho sin bloqueo).
 
 Inventario completo (Tab):
 - Se abre/cierra con Tab (toggleAction).
 - Al abrirse: deshabilita controles del jugador (SetControlsEnabled(false)),
   muestra el cursor.
-- Al cerrarse: re-habilita controles, devuelve items a medio arrastrar.
+- Al cerrarse: re-habilita controles, devuelve ítems a medio arrastrar.
 - Muestra el inventario del jugador (playerPanel) y opcionalmente un
   contenedor externo (externalPanel) al interactuar con armarios/cajas.
 
-Drag & Drop de items:
-  - Clic izquierdo en slot vacio/con item: levanta TODO el stack con icono
+Drag & Drop de ítems:
+  - Clic izquierdo en slot vacío/con ítem: levanta TODO el stack con icono
     flotante (dragIcon).
-  - Clic derecho en slot con >1 item: levanta solo 1 unidad del stack.
-  - Soltar en slot vacio: deposita.
-  - Soltar en slot con mismo item stackeable: combina.
+  - Clic derecho en slot con >1 ítem: levanta solo 1 unidad del stack.
+  - Soltar en slot vacío: deposita.
+  - Soltar en slot con mismo ítem stackeable: combina.
   - Soltar en slot distinto: hace swap.
-  - Click en mismo slot de origen: devuelve el item.
+  - Click en mismo slot de origen: devuelve el ítem.
 
 Modificadores de teclado al hacer click en inventario:
-  - Shift + Click: traspaso rapido completo al otro inventario (jugador <-> externo).
+  - Shift + Click: traspaso rápido completo al otro inventario (jugador <-> externo).
   - Ctrl + Click: traspaso de solo 1 unidad al otro inventario.
   - Ctrl + Shift + Click: tirar todo el stack al suelo (eliminar).
-  - Alt + Click: equipar rapidamente al primer hueco libre de la hotbar (slots 0-2).
+  - Alt + Click: equipar rápidamente al primer hueco libre de la hotbar (slots 0-2).
 
 Inventarios externos:
 - OpenExternalContainer(InventoryContainer, string): abre el inventario
@@ -216,29 +216,29 @@ Inventarios externos:
   InventoryInteractable al interactuar con armarios, cajas, etc.
 
 ==============================================================================
-8. SISTEMA DE INTERACCION
+8. SISTEMA DE INTERACCIÓN
 ==============================================================================
 Scripts: MouseInteractor.cs, IInteractable.cs, InventoryInteractable.cs,
          GroundItem.cs
 
-IInteractable: interfaz con un solo metodo Interact(). Lo implementan todos
+IInteractable: interfaz con un solo método Interact(). Lo implementan todos
 los objetos interactuables del mundo.
 
 MouseInteractor (en el player):
-- Detecta con un Raycast 2D la posicion del cursor en el mundo.
+- Detecta con un Raycast 2D la posición del cursor en el mundo.
 - Si hay un objeto interactuable en rango (maxDistance configurable), cambia
   el cursor a un icono personalizado.
-- Al hacer clic izquierdo, llama a IInteractable.Interact() si el objeto esta
+- Al hacer clic izquierdo, llama a IInteractable.Interact() si el objeto está
   en rango y no hay UI superpuesta.
 - No funciona durante transiciones (ScreenFader.IsFading = true).
 
 Tipos de objetos interactuables implementados:
-  - GroundItem: item en el suelo. Al interactuar, intenta anadirlo al inventario
+  - GroundItem: ítem en el suelo. Al interactuar, intenta añadirlo al inventario
     del jugador. Si cabe, destruye el GameObject del suelo.
   - InventoryInteractable: contenedor de inventario (armario, caja, etc.). Al
     interactuar, abre el inventario del jugador con el contenedor externo.
   - Puerta: interactuable para cruzar entre habitaciones en pesadilla.
-  - Interruptor: interruptor de luz para alternar el estado de la habitacion.
+  - Interruptor: interruptor de luz para alternar el estado de la habitación.
 
 ==============================================================================
 9. SISTEMA DE ENEMIGOS
@@ -247,35 +247,36 @@ Scripts: DimoniController.cs, DimoniIntroSequence.cs
 
 DimoniController (enemigo principal tipo "tyrant"):
 - Persigue al jugador mediante Rigidbody2D con steering simple.
-- ChooseMoveDirection(): si el camino directo esta bloqueado por un obstaculo
+- ChooseMoveDirection(): si el camino directo está bloqueado por un obstáculo
   (Raycast), intenta ir por la izquierda o derecha para rodearlo.
-- TryAttack(): si el jugador esta en attackRange, aplica dano al componente
+- TryAttack(): si el jugador está en attackRange, aplica daño al componente
   Health del jugador. Tiene cooldown entre ataques.
 - SetActive(bool): puede activarse/desactivarse desde otros scripts (se usa
   durante secuencias de intro).
 
 DimoniIntroSequence:
-- Cinemática de introduccion del Dimoni al inicio de la escena.
+- Cinemática de introducción del Dimoni al inicio de la escena.
 - Bloquea los controles del jugador (SetControlsEnabled(false)).
 - Mueve el objeto "dimoniIntroObject" desde un punto inicio hasta un punto fin
   en un tiempo configurable (dimoniRunDuration).
 - Al terminar, desactiva el objeto intro y re-habilita los controles del jugador.
-- playOnStart: si es true se ejecuta automaticamente al arrancar la escena.
+- playOnStart: si es true se ejecuta automáticamente al arrancar la escena.
 
 ==============================================================================
-10. SISTEMA DE SALUD Y DANO
+10. SISTEMA DE SALUD Y DAÑO
 ==============================================================================
 Script: Health.cs
 
-- Componente generico de salud para el jugador y enemigos.
-- TakeDamage(int): reduce salud. No hace nada si ya esta muerto o dano <= 0.
-- Heal(int): recupera salud hasta el maximo.
-- Eventos:
-    * Changed(currentHealth, maxHealth): se dispara cada vez que cambia la
-      salud (para actualizar UI de barra de vida, etc.).
-    * Died(): se dispara cuando la salud llega a 0.
-- destroyOnDeath: si es true, destruye el GameObject al morir (util para
-  enemigos. El jugador probablemente no debe usarlo).
+- Componente genérico y desacoplado de salud para el jugador, enemigos y objetos destructibles.
+- TakeDamage(int): reduce la salud actual de forma segura (`Mathf.Max`).
+- Heal(int): recupera salud hasta el tope máximo (`Mathf.Min`).
+- Eventos públicos (Suscripción modular):
+    * Changed(int, int): Devuelve (currentHealth, maxHealth) en cada cambio físico de la vida.
+    * Damaged(): Se dispara al recibir cualquier cantidad de daño válido.
+    * Healed(): Se dispara al ejecutar una curación efectiva.
+    * Died(): Se dispara inmediatamente cuando la salud llega a 0.
+- destroyOnDeath: flag booleano. Si es true, ejecuta un `Destroy(gameObject)` automático 
+  (diseñado para enemigos o props del entorno, desactivado en el Player).
 
 ==============================================================================
 11. SISTEMA DE TRANSICIONES DE PANTALLA (SCREEN FADER)
@@ -283,105 +284,133 @@ Script: Health.cs
 Script: ScreenFader.cs
 
 - Singleton persistente (DontDestroyOnLoad) con pattern lazy-init.
-- Crea dinamicamente un Canvas con una Image que cubre toda la pantalla.
+- Crea dinámicamente un Canvas con una Image que cubre toda la pantalla.
 - DoTransition(color, fadeOut, hold, fadeIn, callback):
     1. Fundido de transparente al color objetivo (negro o blanco).
-    2. Ejecuta la accion del callback (teletransporte, cambio de estado...).
+    2. Ejecuta la acción del callback (teletransporte, cambio de estado...).
     3. Mantiene el color en pantalla (hold).
     4. Fundido de vuelta a transparente.
-- IsFading: flag publico que bloquea interacciones (MouseInteractor,
-  InventoryUIController) durante la transicion.
-
+- IsFading: flag público que bloquea interacciones (MouseInteractor,
+  InventoryUIController) durante la transición.
 
 ==============================================================================
-12. Estructura y Arquitectura del Sistema de Audio
+12. ESTRUCTURA Y ARQUITECTURA DEL SISTEMA DE AUDIO
 ==============================================================================
--El sistema de audio está diseñado bajo un enfoque desacoplado, modular y
-basado en eventos, dividiendo las responsabilidades entre un gestor global 
-y componentes autónomos en el escenario para optimizar el rendimiento de las 
-físicas de sonido en entornos 2D Top-Down.
+- El sistema de audio está diseñado bajo un enfoque desacoplado, modular y
+  basado en eventos, dividiendo las responsabilidades entre un gestor global 
+  y componentes autónomos en el escenario para optimizar el rendimiento de las 
+  físicas de sonido en entornos 2D Top-Down.
 
--AudioManager Central (Patrón Singleton Persistente):
+- AudioManager Central (Patrón Singleton Persistente):
   Gestiona el ciclo de vida de los sonidos globales 2D 
   (música de ambiente, transiciones de la interfaz o el fader de cambio de estado).
-
   Controla la instanciación y autodestrucción dinámica de objetos de audio temporales
   en el espacio mediante un método genérico PlaySFX3D, evitando colisiones o pisados
   de pistas cuando múltiples entidades emiten sonidos simultáneos.
 
--AudioSources Locales (Objetos de Entorno Continuos):
-
+- AudioSources Locales (Objetos de Entorno Continuos):
   Utilizado para sonidos fijos basados en estados espaciales 3D 
   (por ejemplo, el zumbido eléctrico de un interruptor roto).
-
   Configurados con Spatial Blend = 1.0 (3D puro) y Doppler Level = 0 
   para garantizar una atenuación lineal por distancia limpia, eliminando distorsiones 
   o alteraciones de tono artificiales durante los movimientos rápidos del jugador.
 
--Audio en Ítems Equipables (IItemEquipable / ScriptableObjects):
-
+- Audio en Ítems Equipables (IItemEquipable / ScriptableObjects):
   Inyección de IDs de sonido directamente a través del Inspector 
   en los contenedores de datos de los ítems (ej. BateItemData).
-
   Permite que cada herramienta o arma gestione sus propios efectos físicos
   (como el swing al aire o el impacto físico al colisionar contra una entidad con Health)
   de forma 100% independiente al código del PlayerController.
 
--Objetos Interactuables del Mundo (Interactable):
-
+- Objetos Interactuables del Mundo (Interactable):
   Integrado directamente en la arquitectura de la clase abstracta base Interactable
   (de la cual heredan scripts como GroundItem).
-
   Automatiza la reproducción de efectos acústicos espaciales al interactuar 
   (como recoger un objeto o accionar un mecanismo) mediante un valor de audio protegido
   por defecto (Reset()), ahorrando código duplicado en el desarrollo de nuevos elementos 
   del escenario.
 
--Sistema de Pasos Dinámicos (PlayerFootsteps):
-
+- Sistema de Pasos Dinámicos (PlayerFootsteps):
   Sincronización: Vinculada al milisegundo exacto mediante Animation Events
   en los frames de impacto de los sprites del personaje.
-
   Detección de Superficie: Lógica basada en físicas mediante un barrido circular 
   (Physics2D.OverlapCircle) en la posición de los pies que lee los Tags de los colisionadores
   del suelo (suelo_madera, suelo_charco, etc.).
-
   Variación: Modifica el pitch de forma aleatoria en cada pisada y utiliza un
   rango de enteros exclusivo (Random.Range(1, 3)) para alternar orgánicamente 
   entre múltiples archivos de audio de una misma superficie mediante PlayOneShot,
   evitando cortes abruptos.
+
 ==============================================================================
-13. RESUMEN DE ARQUITECTURA Y FLUJO GENERAL
+13. INTERFAZ DE USUARIO CENTRALIZADA (UI MANAGER)
+==============================================================================
+Script: UIManager.cs y UIScreenEffect.cs
+
+- Singleton central (UIManager.Instance) encargado de la capa de presentación visual.
+- Arquitectura basada en eventos dirigida en exclusiva por el Player:
+  En Start(), busca al objeto con el Tag "Player" y se suscribe a sus eventos de Health. 
+  Evita procesar de forma redundante los eventos Changed/Damaged de los enemigos del escenario.
+
+- Módulo de Salud y Feedback Visual:
+  Actualiza de forma reactiva el ratio del Slider de la barra de vida a través del evento Changed.
+  Al capturar el evento Damaged del Player, ejecuta TriggerEffect("Damage") para activar el sprite 
+  de impacto de sangre y solicita un sacudón de cámara nativo mediante el componente CinemachineImpulseSource del jugador.
+  Al capturar el evento Healed del Player, ejecuta TriggerEffect("Heal") para activar el destello del aura verde.
+
+- Sistema Modular de Efectos de Pantalla (UIScreenEffect.cs):
+  Colección indexada por ID (List<UIScreenEffect>) en el inspector (ej. "Damage", "Heal").
+  Cada efecto es autónomo, posee su propio sprite PNG y gestiona su opacidad en la GPU mediante un componente CanvasGroup.
+  Evita la reconstrucción geométrica del Canvas (Canvas Rebuild) al procesar los desvanecimientos lineales matemáticamente en su propio Update basándose en tiempos independientes.
+
+- Módulo de Diálogos y Notificaciones:
+  ShowDialogue(string) / HideDialogue(): Controla la activación del panel de texto inferior y la inyección de cadenas de caracteres (preparado para la futura integración de Ink o Yarn Spinner).
+  ShowWorldNotification(string): Despliega alertas emergentes flotantes del entorno (ej: "Puerta atascada") limpiando hilos de ejecución previos mediante CancelInvoke y desvaneciéndose automáticamente a los 2.5 segundos.
+
+==============================================================================
+14. RESUMEN DE ARQUITECTURA Y FLUJO GENERAL
 ==============================================================================
 
   [Player GameObject]
-    |- PlayerController     -> Movimiento, rotacion, uso de items con RMB
+    |- PlayerController     -> Movimiento, rotación, uso de ítems con RMB
     |- PlayerInventory      -> Wrapper del inventario del jugador
     |- InventoryContainer   -> Slots de datos del inventario
     |- PlayerRoomTracker    -> Sala actual del jugador
-    |- MouseInteractor      -> Deteccion de interactuables por raycast
-    |- Health               -> Salud del jugador
-    |- FieldOfView          -> Cono de vision (mesh raycast)
-    |- Rigidbody2D          -> Fisica
+    |- MouseInteractor      -> Detección de interactuables por raycast
+    |- Health               -> Salud del jugador (Dispara: Changed, Damaged, Healed, Died)
+    |- PlayerFootsteps      -> Emisión de pasos dinámicos por Animation Events y Tags
+    |- FieldOfView          -> Cono de visión (mesh raycast)
+    |- Rigidbody2D          -> Física
+    |- CinemachineImpulseSource -> Generador nativo de sacudidas de cámara
 
-  [Canvas]
+  [Canvas Principal (_UI_Canvas)]
+    |- UIManager            -> Cerebro visual. Escucha eventos del Health del Player
+    |    |- Slider (Health) -> Barra de vida pasiva (sincronizada por evento Changed)
+    |    |- DialoguePanel   -> Caja de texto inferior para conversaciones
+    |    |- NotificationPanel -> Texto emergente para alertas del entorno ("Puerta Atascada")
+    |
+    |- EffectsPanel (Contenedor de Efectos)
+    |    |- DamageEffect [UIScreenEffect] -> Sprite de Sangre (Se activa con ID "Damage")
+    |    |- HealEffect   [UIScreenEffect] -> Sprite de Aura Verde (Se activa con ID "Heal")
+    |
     |- InventoryUIController -> Hotbar + inventario completo + drag&drop
 
   [Escena - Habitaciones]
-    |- RoomStateManager[N]  -> Estado de cada habitacion (Normal/Pesadilla)
-    |- RoomTrigger[N]       -> Trigger de deteccion de sala para el player
+    |- RoomStateManager[N]  -> Estado de cada habitación (Normal/Pesadilla)
+    |- RoomTrigger[N]       -> Trigger de detección de sala para el player
     |- RoomVisibilityManager -> Gestor global de visibilidad y puertas
 
   [Interactuables]
-    |- Puerta               -> Transicion entre salas
-    |- Interruptor          -> Cambia estado Normal <-> Pesadilla
+    |- Puerta               -> Transición entre salas + ScreenFader
+    |- Interruptor          -> Cambia estado Normal <-> Pesadilla + AudioManager (AudioSource Local)
     |- InventoryInteractable -> Abre inventario externo
-    |- GroundItem           -> Item recogible del suelo
-    |- ArmarioWeaponContainer -> Armario con arma especifica
+    |- GroundItem           -> Ítem recogible del suelo
 
   [Enemigos]
-    |- DimoniController     -> IA de persecucion y ataque
-    |- DimoniIntroSequence  -> Cinematica de intro del Dimoni
+    |- DimoniController     -> IA de persecución y ataque (Aplica daño al Health del Player)
+    |- DimoniIntroSequence  -> Cinemática de intro del Dimoni
+    |- Health               -> Salud del enemigo (Independiente, con destroyOnDeath = true)
 
-  [Singleton]
-    |- ScreenFader          -> Fundidos de pantalla globales
+  [Singletons Globales / Persistentes]
+    |- ScreenFader          -> Fundidos de pantalla globales (DoTransition)
+    |- AudioManager         -> Gestor de música, SFX 2D y pools dinámicos de audio 3D (PlaySFX3D)
+==============================================================================

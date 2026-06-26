@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections.Generic;
+using System.Linq;
 
 public class UIManager : MonoBehaviour
 {
@@ -17,10 +19,8 @@ public class UIManager : MonoBehaviour
     [Header("Módulo de Vida")]
     [SerializeField] private Slider healthSlider; // Tu barra de vida visual
 
-    [Header("Módulo de Daño Visual")]
-    [SerializeField] private CanvasGroup damageFlashCanvasGroup; // Panel rojo a pantalla completa
-    [SerializeField] private float flashDuration = 0.4f;
-    private float flashTimer;
+    [Header("Módulo de Efectos Visuales (Sprites)")]
+    [SerializeField] private List<UIScreenEffect> screenEffects = new List<UIScreenEffect>();
 
     private Health playerHealth;
 
@@ -32,70 +32,76 @@ public class UIManager : MonoBehaviour
 
     private void Start()
     {
+        // Buscamos específicamente al objeto que tenga el Tag de jugador
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)
         {
             playerHealth = player.GetComponent<Health>();
             if (playerHealth != null)
             {
-                // Adaptado a tus eventos nativos:
+                // Nos suscribimos SOLO a los eventos del Player
                 playerHealth.Changed += UpdateHealthUI;
-                playerHealth.Damaged += TriggerDamageEffects;
+                playerHealth.Damaged += HandlePlayerDamage;
+                playerHealth.Healed += HandlePlayerHeal; // Escuchamos la curación
 
+                // Forzamos la primera actualización manual para rellenar la barra de vida al arrancar
                 UpdateHealthUI(playerHealth.CurrentHealth, playerHealth.MaxHealth);
             }
-        }
-
-        if (damageFlashCanvasGroup != null) damageFlashCanvasGroup.alpha = 0f;
-    }
-
-    private void Update()
-    {
-        // Gestión del fade-out del flash de daño de forma lineal sin necesidad de Corrutinas
-        if (damageFlashCanvasGroup != null && damageFlashCanvasGroup.alpha > 0)
-        {
-            flashTimer -= Time.deltaTime;
-            damageFlashCanvasGroup.alpha = Mathf.Clamp01(flashTimer / flashDuration);
         }
     }
 
     private void OnDestroy()
     {
+        // Limpieza estricta para evitar fugas de memoria
         if (playerHealth != null)
         {
-            // Limpieza con tus eventos nativos:
             playerHealth.Changed -= UpdateHealthUI;
-            playerHealth.Damaged -= TriggerDamageEffects;
+            playerHealth.Damaged -= HandlePlayerDamage;
+            playerHealth.Healed -= HandlePlayerHeal;
         }
     }
 
+
+
     // ======================================================================
-    // MÓDULO DE SALUD Y EFECTOS DE DAÑO
+    // MÓDULO DE SALUD Y EFECTOS
     // ======================================================================
     
+    public void TriggerEffect(string id)
+    {
+        // Busca el efecto correspondiente en la lista (Cura, Daño, Veneno...) y lo activa
+        UIScreenEffect effect = screenEffects.FirstOrDefault(e => e.EffectID == id);
+        if (effect != null)
+        {
+            effect.Play();
+        }
+        else
+        {
+            Debug.LogWarning($"El efecto de pantalla con ID '{id}' no está registrado en el UIManager.");
+        }
+    }
+
+    private void HandlePlayerDamage()
+    {
+        TriggerEffect("Damage"); // Activa tu sprite de impacto de sangre modular
+
+        // Meneo de cámara nativo de Cinemachine si el Player tiene el Impulse Source
+        if (playerHealth.TryGetComponent<Unity.Cinemachine.CinemachineImpulseSource>(out var impulse))
+        {
+            impulse.GenerateImpulse();
+        }
+    }
+
+    private void HandlePlayerHeal()
+    {
+        TriggerEffect("Heal"); // Activa tu sprite de aura verde modular
+    }
+
     private void UpdateHealthUI(int currentHealth, int maxHealth)
     {
         if (healthSlider != null)
         {
             healthSlider.value = (float)currentHealth / maxHealth;
-        }
-    }
-
-    private void TriggerDamageEffects()
-    {
-        // 1. Activamos el flash de daño en pantalla (el Update se encarga de desvanecerlo)
-        if (damageFlashCanvasGroup != null)
-        {
-            damageFlashCanvasGroup.alpha = 1f;
-            flashTimer = flashDuration;
-        }
-
-        // 2. AGREGADO CINEMACHINE: Meneo de cámara nativo
-        // Buscamos el componente Impulse Source en el Player si lo tienes configurado
-        var impulse = playerHealth.GetComponent<Unity.Cinemachine.CinemachineImpulseSource>();
-        if (impulse != null)
-        {
-            impulse.GenerateImpulse(); // Hace vibrar la cámara Cinemachine automáticamente
         }
     }
 
