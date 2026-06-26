@@ -146,7 +146,8 @@ public class MouseInteractor : MonoBehaviour
             return;
         }
 
-        IInteractable interactable = hit.collider.GetComponent<IInteractable>();
-        interactable?.Interact();
+        // Busca el interactuable en el objeto impactado o sube por la jerarquía hasta el padre si es necesario
+        Interactable interactable = hit.collider.GetComponentInParent<Interactable>();
+        if (interactable != null) interactable.TriggerInteract();
     }
 }

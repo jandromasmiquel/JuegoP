@@ -12,6 +12,9 @@ public class Health : MonoBehaviour
 
     public event Action<int, int> Changed;
     public event Action Died;
+    
+    // NUEVO: Evento específico para cuando se recibe daño (lo usará la UI y la cámara)
+    public event Action Damaged; 
 
     private void Awake()
     {
@@ -28,6 +31,9 @@ public class Health : MonoBehaviour
 
         CurrentHealth = Mathf.Max(0, CurrentHealth - amount);
         Changed?.Invoke(CurrentHealth, maxHealth);
+        
+        // NUEVO: Avisamos a los que estén escuchando de que nos han pegado un golpe
+        Damaged?.Invoke(); 
 
         if (IsDead)
         {

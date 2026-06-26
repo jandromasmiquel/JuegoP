@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class Puerta : MonoBehaviour, IInteractable
+public class Puerta : Interactable
 {
     [Header("Connected Rooms")]
     [SerializeField] private RoomStateManager roomA;
@@ -18,6 +18,11 @@ public class Puerta : MonoBehaviour, IInteractable
     private bool isInteractable;
     private RoomStateManager targetRoomForTeleport;
     private Transform targetSpawnPoint;
+    
+    private void Reset()
+    {
+        interactAudioID = "door"; 
+    }
 
     public bool Connects(RoomStateManager r1, RoomStateManager r2)
     {
@@ -95,7 +100,7 @@ public class Puerta : MonoBehaviour, IInteractable
         }
     }
 
-    public void Interact()
+    protected override void OnInteract()
     {
         if (!isInteractable || targetRoomForTeleport == null || targetSpawnPoint == null)
         {

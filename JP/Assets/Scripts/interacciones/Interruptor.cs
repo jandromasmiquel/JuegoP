@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class Interruptor : MonoBehaviour, IInteractable
+public class Interruptor : Interactable
 {
     [SerializeField] private RoomStateManager roomStateManager;
     [SerializeField] private PlayerInventory inventory;
@@ -26,8 +26,12 @@ public class Interruptor : MonoBehaviour, IInteractable
             inventory = FindAnyObjectByType<PlayerInventory>();
         }
     }
+    private void Reset()
+    {
+        interactAudioID = "switch"; 
+    }
 
-    public void Interact()
+    protected override void OnInteract()
     {
         // Solo permitir interactuar (sea reparar o encender) si el jugador está dentro de la misma habitación
         PlayerRoomTracker tracker = FindAnyObjectByType<PlayerRoomTracker>();

@@ -292,8 +292,66 @@ Script: ScreenFader.cs
 - IsFading: flag publico que bloquea interacciones (MouseInteractor,
   InventoryUIController) durante la transicion.
 
+
 ==============================================================================
-12. RESUMEN DE ARQUITECTURA Y FLUJO GENERAL
+12. Estructura y Arquitectura del Sistema de Audio
+==============================================================================
+-El sistema de audio está diseñado bajo un enfoque desacoplado, modular y
+basado en eventos, dividiendo las responsabilidades entre un gestor global 
+y componentes autónomos en el escenario para optimizar el rendimiento de las 
+físicas de sonido en entornos 2D Top-Down.
+
+-AudioManager Central (Patrón Singleton Persistente):
+  Gestiona el ciclo de vida de los sonidos globales 2D 
+  (música de ambiente, transiciones de la interfaz o el fader de cambio de estado).
+
+  Controla la instanciación y autodestrucción dinámica de objetos de audio temporales
+  en el espacio mediante un método genérico PlaySFX3D, evitando colisiones o pisados
+  de pistas cuando múltiples entidades emiten sonidos simultáneos.
+
+-AudioSources Locales (Objetos de Entorno Continuos):
+
+  Utilizado para sonidos fijos basados en estados espaciales 3D 
+  (por ejemplo, el zumbido eléctrico de un interruptor roto).
+
+  Configurados con Spatial Blend = 1.0 (3D puro) y Doppler Level = 0 
+  para garantizar una atenuación lineal por distancia limpia, eliminando distorsiones 
+  o alteraciones de tono artificiales durante los movimientos rápidos del jugador.
+
+-Audio en Ítems Equipables (IItemEquipable / ScriptableObjects):
+
+  Inyección de IDs de sonido directamente a través del Inspector 
+  en los contenedores de datos de los ítems (ej. BateItemData).
+
+  Permite que cada herramienta o arma gestione sus propios efectos físicos
+  (como el swing al aire o el impacto físico al colisionar contra una entidad con Health)
+  de forma 100% independiente al código del PlayerController.
+
+-Objetos Interactuables del Mundo (Interactable):
+
+  Integrado directamente en la arquitectura de la clase abstracta base Interactable
+  (de la cual heredan scripts como GroundItem).
+
+  Automatiza la reproducción de efectos acústicos espaciales al interactuar 
+  (como recoger un objeto o accionar un mecanismo) mediante un valor de audio protegido
+  por defecto (Reset()), ahorrando código duplicado en el desarrollo de nuevos elementos 
+  del escenario.
+
+-Sistema de Pasos Dinámicos (PlayerFootsteps):
+
+  Sincronización: Vinculada al milisegundo exacto mediante Animation Events
+  en los frames de impacto de los sprites del personaje.
+
+  Detección de Superficie: Lógica basada en físicas mediante un barrido circular 
+  (Physics2D.OverlapCircle) en la posición de los pies que lee los Tags de los colisionadores
+  del suelo (suelo_madera, suelo_charco, etc.).
+
+  Variación: Modifica el pitch de forma aleatoria en cada pisada y utiliza un
+  rango de enteros exclusivo (Random.Range(1, 3)) para alternar orgánicamente 
+  entre múltiples archivos de audio de una misma superficie mediante PlayOneShot,
+  evitando cortes abruptos.
+==============================================================================
+13. RESUMEN DE ARQUITECTURA Y FLUJO GENERAL
 ==============================================================================
 
   [Player GameObject]

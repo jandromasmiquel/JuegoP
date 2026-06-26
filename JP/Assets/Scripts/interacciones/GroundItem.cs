@@ -1,14 +1,10 @@
 using UnityEngine;
 
-public class GroundItem : MonoBehaviour, IInteractable
+public class GroundItem : Interactable
 {
     [SerializeField] private ItemData item;
     [SerializeField] private int amount = 1;
     [SerializeField] private PlayerInventory playerInventory;
-
-    [Header("Audio")]
-    [Tooltip("ID del sonido en el AudioManager. Si se deja vacío, usará un sonido genérico.")]
-    [SerializeField] private string pickupAudioID = "item_pickup_generic";
 
     private void Awake()
     {
@@ -17,8 +13,12 @@ public class GroundItem : MonoBehaviour, IInteractable
             playerInventory = FindAnyObjectByType<PlayerInventory>();
         }
     }
+    private void Reset()
+    {
+        interactAudioID = "item_pickup_generic"; 
+    }
 
-    public void Interact()
+    protected override void OnInteract()
     {
         if (item == null)
         {
@@ -36,13 +36,6 @@ public class GroundItem : MonoBehaviour, IInteractable
         {
             Debug.Log("No cabe en el inventario.");
             return;
-        }
-
-        // REPRODUCIR SONIDO ANTES DE DESTRUIR EL OBJETO
-        // Usamos PlaySFX3D en la posición del ítem para que el jugador escuche espacialmente dónde lo ha cogido
-        if (!string.IsNullOrEmpty(pickupAudioID))
-        {
-            AudioManager.Instance.PlaySFX3D(pickupAudioID, transform.position);
         }
 
         Destroy(gameObject);

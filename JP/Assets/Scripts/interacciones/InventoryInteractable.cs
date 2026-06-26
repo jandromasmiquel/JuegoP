@@ -1,7 +1,7 @@
 using UnityEngine;
 
 [RequireComponent(typeof(InventoryContainer))]
-public class InventoryInteractable : MonoBehaviour, IInteractable
+public class InventoryInteractable : Interactable
 {
     [SerializeField] private InventoryContainer container;
     [SerializeField] private string title = "Contenedor";
@@ -17,7 +17,7 @@ public class InventoryInteractable : MonoBehaviour, IInteractable
         }
     }
 
-    public void Interact()
+    protected override void OnInteract()
     {
         InventoryUIController ui = FindAnyObjectByType<InventoryUIController>();
         if (ui == null)

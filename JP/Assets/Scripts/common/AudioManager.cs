@@ -90,4 +90,10 @@ public class AudioManager : MonoBehaviour
             musicSource.Play();
         }
     }
+
+    public AudioClip GetAudioClip(string id)
+    {
+        if (audioDatabase.TryGetValue(id, out AudioClip clip)) return clip;
+        return null;
+    }
 }
