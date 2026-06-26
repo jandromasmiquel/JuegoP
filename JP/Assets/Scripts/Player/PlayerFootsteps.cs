@@ -37,7 +37,6 @@ public class PlayerFootsteps : MonoBehaviour
 
         if (hit != null)
         {   
-            Debug.Log("hit: " + hit.name + " tag: " + hit.tag);
             // Evaluamos el Tag del objeto del suelo que hemos pisado
             switch (hit.tag)
             {
