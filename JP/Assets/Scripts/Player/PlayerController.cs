@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System.Collections;
 
 public class PlayerController : MonoBehaviour
 {
@@ -13,6 +14,10 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Transform visualsContainer; // Objeto vacío "Visuals"
     [SerializeField] private Animator piernasAnimator;   // Objeto hijo "piernas"
     [SerializeField] private Animator torsoAnimator;     // Objeto hijo "torso"
+
+    //CURACIÓN
+    private Coroutine healCoroutine;
+    private bool isHealing = false;
 
     private Rigidbody2D rb;
     private Camera mainCamera;
@@ -218,6 +223,59 @@ public class PlayerController : MonoBehaviour
         {
             roomSuscrita.StateChanged -= OnRoomStateChanged;
             roomSuscrita = null;
+        }
+    }
+
+
+
+    // CURACION
+    public void StartDelayedHeal(int amount, float delay, HealItemData itemData)
+    {
+        // Si ya te estás curando, ignoramos el nuevo clic
+        if (isHealing) return; 
+
+        healCoroutine = StartCoroutine(DelayedHealRoutine(amount, delay, itemData));
+    }
+
+    private IEnumerator DelayedHealRoutine(int amount, float delay, HealItemData itemData)
+    {
+        isHealing = true;
+        float elapsed = 0f;
+
+        Debug.Log("Comenzando a vendarse... Camina para cancelar.");
+        // torsoAnimator.SetTrigger("Curarse");
+
+        while (elapsed < delay)
+        {
+            // OBTENER INPUT: Asegúrate de actualizar tu 'moveInput' antes de este check.
+            // Si el jugador se mueve (magnitud del vector WASD mayor que cero), cancelamos.
+            if (moveInput.sqrMagnitude > 0.01f)
+            {
+                Debug.Log("¡Curación CANCELADA por movimiento!");
+                // torsoAnimator.SetTrigger("CancelarCuracion"); // O resetea el trigger
+                isHealing = false;
+                yield break; // Rompe la corrutina AQUÍ. No hay cura ni gasto de ítem.
+            }
+
+            elapsed += Time.deltaTime;
+            yield return null; // Esperamos al siguiente frame
+        }
+
+        // --- SI LLEGAMOS AQUÍ, LA CURA HA SIDO UN ÉXITO ---
+        isHealing = false;
+
+        // 1. Aplicamos la salud real
+        if (TryGetComponent<Health>(out var playerHealth))
+        {
+            playerHealth.Heal(amount);
+        }
+
+        // 2. Consumimos el ítem del inventario de forma manual
+        // Accedemos a tu PlayerInventory para restar 1 unidad del ítem que acabamos de usar
+        if (TryGetComponent<PlayerInventory>(out var playerInventory))
+        {
+            // Usamos el método de tu InventoryContainer para quitar 1 unidad
+            playerInventory.TryUseItem(itemData, 1);
         }
     }
 }

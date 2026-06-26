@@ -7711,14 +7711,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.21960786, g: 0.21960786, b: 0.21960786, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Sprite: {fileID: 0}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -12666,12 +12666,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 1495203872}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a5441b4fd9bebf94a92a6303ad6f69f2, type: 3}
+  m_Script: {fileID: 11500000, guid: b57d823974b4d2d4cb511c94b3b367ed, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InventoryInteractable
-  interactAudioID: 
+  interactAudioID: wardrobe_door
   container: {fileID: 1495203878}
-  title: Armario
+  title: Contenedor
 --- !u!114 &1495203878
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12688,8 +12688,8 @@ MonoBehaviour:
   slots:
   - item: {fileID: 11400000, guid: 8e621f1e88aa91c439bceb71400877f1, type: 2}
     amount: 1
-  - item: {fileID: 0}
-    amount: 0
+  - item: {fileID: 11400000, guid: de98edb784d8a534d92ac1102c373fb3, type: 2}
+    amount: 10
   - item: {fileID: 0}
     amount: 0
   - item: {fileID: 0}
@@ -12790,21 +12790,6 @@ SpriteRenderer:
   m_CorrespondingSourceObject: {fileID: 2733511013706274455, guid: 538c3abba0d755f41a5bcc02a366188d, type: 3}
   m_PrefabInstance: {fileID: 2047666774}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1495203882
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1495203872}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b57d823974b4d2d4cb511c94b3b367ed, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InventoryInteractable
-  interactAudioID: wardrobe_door
-  container: {fileID: 1495203878}
-  title: Contenedor
 --- !u!43 &1528428589
 Mesh:
   m_ObjectHideFlags: 0
@@ -16829,9 +16814,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2484670768235617422, guid: 538c3abba0d755f41a5bcc02a366188d, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1495203877}
-    - targetCorrespondingSourceObject: {fileID: 2484670768235617422, guid: 538c3abba0d755f41a5bcc02a366188d, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1495203882}
   m_SourcePrefab: {fileID: 100100000, guid: 538c3abba0d755f41a5bcc02a366188d, type: 3}
 --- !u!1 &2077383939
 GameObject:
@@ -17752,7 +17734,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.3018868, g: 0.3018868, b: 0.3018868, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
