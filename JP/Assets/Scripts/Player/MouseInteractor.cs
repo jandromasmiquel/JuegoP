@@ -15,10 +15,12 @@ public class MouseInteractor : MonoBehaviour
     private InputAction clickAction;
     private bool isHoveringInteractable;
     private bool clickTriggered;
+    private PlayerController playerController;
 
     private void Awake()
     {
         mainCamera = Camera.main;
+        playerController = GetComponent<PlayerController>();
         clickAction = new InputAction("Click", InputActionType.Button, "<Mouse>/leftButton");
         clickAction.performed += OnClick;
     }
@@ -53,6 +55,12 @@ public class MouseInteractor : MonoBehaviour
 
     private void UpdateCursorHover()
     {
+        if (playerController != null && playerController.IsHealing)
+        {
+            ResetCursor();
+            return;
+        }
+
         if (Mouse.current == null || mainCamera == null)
         {
             ResetCursor();

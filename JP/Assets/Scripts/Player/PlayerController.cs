@@ -16,10 +16,15 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Animator torsoAnimator;     // Objeto hijo "torso"
 
     //CURACIÓN
+    [SerializeField] private AudioSource loopAudioSource; // Un AudioSource dedicado para sonidos continuos (loop)
+    [SerializeField] private AudioClip healLoopSFX;      // El sonido de vendarse (gasa raspando)
+    [SerializeField] private AudioClip healSuccessSFX;   // El 'click' o sonido de éxito al terminar
+
     private Coroutine healCoroutine;
     private bool isHealing = false;
     public static event System.Action<bool, float> OnActionProgressChanged;
-
+    [Header("Audio Settings - Cura")]
+    
     private Rigidbody2D rb;
     private Camera mainCamera;
     private InputAction moveAction;
@@ -241,29 +246,40 @@ public class PlayerController : MonoBehaviour
         isHealing = true;
         float elapsed = 0f;
 
-        Debug.Log("Comenzando a vendarse...");
+        if (loopAudioSource != null && healLoopSFX != null)
+        {
+            loopAudioSource.clip = healLoopSFX;
+            loopAudioSource.Play();
+        }
 
         while (elapsed < delay)
         {
-            // Si el jugador se mueve, llamamos al nuevo método centralizado
             if (moveInput.sqrMagnitude > 0.01f)
             {
-                CancelHeal();
+                CancelHeal(); // Este método ya se encarga de parar el audio
                 yield break;
             }
 
             elapsed += Time.deltaTime;
             float normalizedProgress = elapsed / delay;
-            
-            // Enviamos el progreso (0 a 1)
             OnActionProgressChanged?.Invoke(true, normalizedProgress);
 
             yield return null;
         }
 
-        // --- ÉXITO ---
+        // --- SUCESO CON ÉXITO ---
         isHealing = false;
         OnActionProgressChanged?.Invoke(false, 0f);
+
+        if (loopAudioSource != null)
+        {
+            loopAudioSource.Stop();
+            if (healSuccessSFX != null)
+            {
+                // PlayOneShot evita pisar otros canales si los hay
+                loopAudioSource.PlayOneShot(healSuccessSFX); 
+            }
+        }
 
         if (TryGetComponent<Health>(out var playerHealth))
         {
@@ -276,7 +292,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    // MÉTODO CENTRALIZADO DE CANCELACIÓN
+    // NUESTRO MÉTODO DE CANCELACIÓN CENTRALIZADO
     public void CancelHeal()
     {
         if (!isHealing) return;
@@ -289,11 +305,13 @@ public class PlayerController : MonoBehaviour
         }
         
         isHealing = false;
-        
-        // Avisamos a la UI de que borre el progreso de inmediato
         OnActionProgressChanged?.Invoke(false, 0f);
 
-        // Aquí meteremos más adelante el STOP del audio
+        if (loopAudioSource != null)
+        {
+            loopAudioSource.Stop();
+            // Opcional: Aquí podrías meter un pequeño sfx sutil de "acción interrumpida" si quisieras
+        }
     }
 
     // Getter público para que el inventario consulte si nos estamos curando

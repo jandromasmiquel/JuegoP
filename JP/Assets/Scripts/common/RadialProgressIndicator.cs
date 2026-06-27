@@ -9,6 +9,7 @@ public class RadialProgressIndicator : MonoBehaviour
     
     private RectTransform rectTransform;
     private RectTransform canvasRectTransform;
+    private Camera canvasCamera;
     private bool isTrackingMouse = false;
 
     private void Awake()
@@ -18,22 +19,19 @@ public class RadialProgressIndicator : MonoBehaviour
         if (parentCanvas != null)
         {
             canvasRectTransform = parentCanvas.GetComponent<RectTransform>();
+            canvasCamera = parentCanvas.renderMode == RenderMode.ScreenSpaceOverlay
+                ? null
+                : parentCanvas.worldCamera;
         }
 
+        PlayerController.OnActionProgressChanged += HandleProgressUpdate;
         gameObject.SetActive(false);
     }
 
-    private void OnEnable()
-    {
-        PlayerController.OnActionProgressChanged += HandleProgressUpdate;
-    }
-
-    private void OnDisable()
+    private void OnDestroy()
     {
         PlayerController.OnActionProgressChanged -= HandleProgressUpdate;
-        // Al destruirse o desactivarse el script por completo, nos aseguramos de devolver el cursor
-        Cursor.visible = true;
-        Cursor.lockState = CursorLockMode.None;
+        RestoreCursor();
     }
 
     private void HandleProgressUpdate(bool mostrar, float progreso)
@@ -43,33 +41,40 @@ public class RadialProgressIndicator : MonoBehaviour
 
         if (mostrar)
         {
-            // Forzamos la desaparición del cursor del sistema
-            Cursor.visible = false;
-            Cursor.lockState = CursorLockMode.Confined; // Evita que el ratón se salga de la ventana de juego
-            
+            HideSystemCursor();
+
             if (fillImage != null)
             {
                 fillImage.fillAmount = progreso;
             }
-            
+
             UpdatePositionToMouse();
         }
         else
         {
-            Cursor.visible = true;
-            Cursor.lockState = CursorLockMode.None;
+            RestoreCursor();
         }
     }
 
     private void Update()
     {
-        if (isTrackingMouse)
-        {
-            // Mantenemos el cursor oculto rigurosamente en cada frame
-            if (Cursor.visible) Cursor.visible = false;
-            
-            UpdatePositionToMouse();
-        }
+        if (!isTrackingMouse) return;
+
+        HideSystemCursor();
+        UpdatePositionToMouse();
+    }
+
+    private void HideSystemCursor()
+    {
+        Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Confined;
+    }
+
+    private void RestoreCursor()
+    {
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
     }
 
     private void UpdatePositionToMouse()
@@ -77,10 +82,9 @@ public class RadialProgressIndicator : MonoBehaviour
         if (Mouse.current == null || canvasRectTransform == null) return;
 
         Vector2 mousePos = Mouse.current.position.ReadValue();
-        
-        // Calculamos la posición local respecto al canvas padre para que sea milimétrico
+
         if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                canvasRectTransform, mousePos, null, out Vector2 localPos))
+                canvasRectTransform, mousePos, canvasCamera, out Vector2 localPos))
         {
             rectTransform.anchoredPosition = localPos;
         }
