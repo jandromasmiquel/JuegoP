@@ -187,8 +187,12 @@ public class InventoryUIController : MonoBehaviour
         if (playerController != null)
         {
             playerController.SetControlsEnabled(false);
+            if (playerController.IsHealing)
+            {
+                playerController.CancelHeal(); 
+            }
         }
-
+        
         Cursor.visible = true;
     }
 
@@ -277,7 +281,14 @@ public class InventoryUIController : MonoBehaviour
 
     private void ChangeActiveSlot(int newIndex)
     {
+
         if (newIndex < 0 || newIndex >= hotbarSlots.Length) return;
+
+        if (playerController.IsHealing)
+        {
+            Debug.Log("No puedes cambiar de ítem mientras te curas.");
+            return; // Bloquea el cambio de ranura
+        }
 
         activeSlotIndex = newIndex;
         UpdateHighlightPosition();

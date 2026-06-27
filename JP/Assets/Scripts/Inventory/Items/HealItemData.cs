@@ -10,21 +10,33 @@ public class HealItemData : ItemData, IItemEquipable
 
     private float nextUseTime;
 
+    // Con esto nos aseguramos de que cada vez que des a Play o cargues el juego,
+    // el cooldown de este objeto concreto empiece limpio en cero.
+    private void OnEnable()
+    {
+        nextUseTime = 0f;
+    }
+
     public bool EnUsar(PlayerController player, Transform lineOfSight)
     {
-        if (Time.time < nextUseTime) return false;
+        // Debug para ver qué está pasando exactamente en la consola
+        Debug.Log($"[HealItem] Time.time: {Time.time} | nextUseTime: {nextUseTime}");
+
+        if (Time.time < nextUseTime) 
+        {
+            Debug.Log("[HealItem] Bloqueado por Cooldown");
+            return false;
+        }
 
         if (player.TryGetComponent<Health>(out var playerHealth))
         {
             if (playerHealth.CurrentHealth >= playerHealth.MaxHealth) return false;
 
-            // Iniciamos el casteo en el jugador
             player.StartDelayedHeal(healAmount, castTime, this);
 
-            // El cooldown se aplica al intento
             nextUseTime = Time.time + castTime + cooldown;
         }
 
-        return false; // IMPORTANTE: Devolvemos false para NO consumir el ítem aún
+        return false; 
     }
 }

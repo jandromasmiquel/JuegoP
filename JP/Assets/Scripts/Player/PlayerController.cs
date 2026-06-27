@@ -18,6 +18,7 @@ public class PlayerController : MonoBehaviour
     //CURACIÓN
     private Coroutine healCoroutine;
     private bool isHealing = false;
+    public static event System.Action<bool, float> OnActionProgressChanged;
 
     private Rigidbody2D rb;
     private Camera mainCamera;
@@ -231,9 +232,7 @@ public class PlayerController : MonoBehaviour
     // CURACION
     public void StartDelayedHeal(int amount, float delay, HealItemData itemData)
     {
-        // Si ya te estás curando, ignoramos el nuevo clic
         if (isHealing) return; 
-
         healCoroutine = StartCoroutine(DelayedHealRoutine(amount, delay, itemData));
     }
 
@@ -242,40 +241,61 @@ public class PlayerController : MonoBehaviour
         isHealing = true;
         float elapsed = 0f;
 
-        Debug.Log("Comenzando a vendarse... Camina para cancelar.");
-        // torsoAnimator.SetTrigger("Curarse");
+        Debug.Log("Comenzando a vendarse...");
 
         while (elapsed < delay)
         {
-            // OBTENER INPUT: Asegúrate de actualizar tu 'moveInput' antes de este check.
-            // Si el jugador se mueve (magnitud del vector WASD mayor que cero), cancelamos.
+            // Si el jugador se mueve, llamamos al nuevo método centralizado
             if (moveInput.sqrMagnitude > 0.01f)
             {
-                Debug.Log("¡Curación CANCELADA por movimiento!");
-                // torsoAnimator.SetTrigger("CancelarCuracion"); // O resetea el trigger
-                isHealing = false;
-                yield break; // Rompe la corrutina AQUÍ. No hay cura ni gasto de ítem.
+                CancelHeal();
+                yield break;
             }
 
             elapsed += Time.deltaTime;
-            yield return null; // Esperamos al siguiente frame
+            float normalizedProgress = elapsed / delay;
+            
+            // Enviamos el progreso (0 a 1)
+            OnActionProgressChanged?.Invoke(true, normalizedProgress);
+
+            yield return null;
         }
 
-        // --- SI LLEGAMOS AQUÍ, LA CURA HA SIDO UN ÉXITO ---
+        // --- ÉXITO ---
         isHealing = false;
+        OnActionProgressChanged?.Invoke(false, 0f);
 
-        // 1. Aplicamos la salud real
         if (TryGetComponent<Health>(out var playerHealth))
         {
             playerHealth.Heal(amount);
         }
 
-        // 2. Consumimos el ítem del inventario de forma manual
-        // Accedemos a tu PlayerInventory para restar 1 unidad del ítem que acabamos de usar
         if (TryGetComponent<PlayerInventory>(out var playerInventory))
         {
-            // Usamos el método de tu InventoryContainer para quitar 1 unidad
             playerInventory.TryUseItem(itemData, 1);
         }
     }
+
+    // MÉTODO CENTRALIZADO DE CANCELACIÓN
+    public void CancelHeal()
+    {
+        if (!isHealing) return;
+
+        Debug.Log("¡Curación abortada!");
+        
+        if (healCoroutine != null)
+        {
+            StopCoroutine(healCoroutine);
+        }
+        
+        isHealing = false;
+        
+        // Avisamos a la UI de que borre el progreso de inmediato
+        OnActionProgressChanged?.Invoke(false, 0f);
+
+        // Aquí meteremos más adelante el STOP del audio
+    }
+
+    // Getter público para que el inventario consulte si nos estamos curando
+    public bool IsHealing => isHealing;
 }
